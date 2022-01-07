@@ -204,6 +204,8 @@ Full member variable/constant definition: `[public|protected|private] [var|const
 
 Alias types: `alias <alias_name> = <original_type>`
 
+
+
 Built-in Hydrogen types:
     Format: <type_name>: <size_in_bytes>
     boolean: 1
@@ -222,6 +224,7 @@ Built-in Hydrogen types:
     adr: depend on architecture[x86:4, x86-64:6?8]
     template <type t> ptr<t>: sizeof(adr)
     template <type t> ref<t>: sizeof(adr)
+
 Built-in Hydrogen constexpr functions:
     template <type t> decl constexpr func ptrof(const ref<t>) returns ptr<t>
     template <type t> decl constexpr func deref(const ptr<t>) return ref<t>
