@@ -9,9 +9,9 @@ CXX := clang++ -c -o
 LINKER := clang++ -o
 ANTLR := antlr4 -Dlanguage=Cpp -Xexact-output-dir -no-listener -visitor -o
 
-INCLUDE_FLAGS := -Iinclude
+INCLUDE_FLAGS := -Iinclude -I/usr/include/antlr4-runtime
 CXXFLAGS := 
-LINK_FLAGS := 
+LINK_FLAGS := -lantlr4-runtime
 
 GRAMMARS_DIR := grammars
 SRC_DIR := src
@@ -23,13 +23,14 @@ SRC_FILES := $(call rwildcard,$(SRC_DIR),*.cpp)
 GRAMMAR_FILES := $(wildcard $(GRAMMARS_DIR)/*.g4)
 OBJ_DIR := $(BUILD_DIR)/obj
 OUTPUT := $(BUILD_DIR)/hyc
-OBJ_FILES := $(patsubst %,$(OBJ_DIR)/%.o,$(SRC_FILES))
 
 GRAMMARS_OUTPUT_DIR := $(BUILD_DIR)/grammars
 GRAMMARS_OUTPUT_DIRS := $(patsubst $(GRAMMARS_DIR)/%.g4,$(GRAMMARS_OUTPUT_DIR)/%,$(GRAMMAR_FILES))
 
 SRC_FILES += $(foreach dir,$(GRAMMARS_OUTPUT_DIRS),$(wildcard $(dir)/*.cpp))
 INCLUDE_FLAGS += $(patsubst %,-I%,$(GRAMMARS_OUTPUT_DIRS))
+
+OBJ_FILES := $(patsubst %,$(OBJ_DIR)/%.o,$(SRC_FILES))
 
 # Begin targets
 .DEFAULT_TARGET := all
@@ -38,7 +39,7 @@ INCLUDE_FLAGS += $(patsubst %,-I%,$(GRAMMARS_OUTPUT_DIRS))
 
 all: hyc
 
-hyc: $(OBJ_FILES) grammars
+hyc: grammars $(OBJ_FILES)
 	$(info Linking output file)
 	@$(LINKER) $(OUTPUT) $(LINK_FLAGS) $(OBJ_FILES)
 
