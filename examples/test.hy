@@ -1,3 +1,3 @@
-def global var int a = 10
+def int a = 10
 
-print 'a = ' + a
+print a

@@ -5,8 +5,8 @@ rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(
 # Begin configuration
 MKDIR := mkdir -p
 RM := rm -rf
-CXX := clang++ -c -o
-LINKER := clang++ -o
+CXX := clang++ -g -ferror-limit=1 -std=c++20 -c -o
+LINKER := clang++ -g -ferror-limit=1 -std=c++20 -o
 ANTLR := antlr4 -Dlanguage=Cpp -Xexact-output-dir -no-listener -visitor -o
 
 INCLUDE_FLAGS := -Iinclude -I/usr/include/antlr4-runtime

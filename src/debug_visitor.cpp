@@ -1,16 +1,16 @@
-#include <source_visitor.hpp>
+#include <debug_visitor.hpp>
 #include <sstream>
 
 namespace hydrogen
 {
-    antlrcpp::Any source_visitor::visitSource(HydrogenParser::SourceContext* ctx)
+    antlrcpp::Any debug_visitor::visitSource(HydrogenParser::SourceContext* ctx)
     {
         std::stringstream ss;
         for(HydrogenParser::StmtContext* stmt : ctx->stmt())
             ss << visitStmt(stmt).as<std::string>();
         return ss.str();
     }
-    antlrcpp::Any source_visitor::visitStmt(HydrogenParser::StmtContext* stmt)
+    antlrcpp::Any debug_visitor::visitStmt(HydrogenParser::StmtContext* stmt)
     {
         std::stringstream ss;
         if(stmt->dataholder_def())
@@ -19,14 +19,14 @@ namespace hydrogen
             ss << visitPrint_stmt(stmt->print_stmt()).as<std::string>();
         return ss.str();
     }
-    antlrcpp::Any source_visitor::visitPrint_stmt(HydrogenParser::Print_stmtContext* pr)
+    antlrcpp::Any debug_visitor::visitPrint_stmt(HydrogenParser::Print_stmtContext* pr)
     {
         std::stringstream ss;
         ss << "Print stament: \n";
         ss << "\tExpression: " << visitExpr(pr->expr()).as<std::string>() << '\n';
         return ss.str();
     }
-    antlrcpp::Any source_visitor::visitDataholder_def(HydrogenParser::Dataholder_defContext* dhd_ctx)
+    antlrcpp::Any debug_visitor::visitDataholder_def(HydrogenParser::Dataholder_defContext* dhd_ctx)
     {
         std::stringstream ss;
         std::string scope  = "implicit(local)";
@@ -42,7 +42,7 @@ namespace hydrogen
         ss << "\tDefault value       : " << def_value << '\n';
         return ss.str();
     }
-    antlrcpp::Any source_visitor::visitType_spec(HydrogenParser::Type_specContext* tspec)
+    antlrcpp::Any debug_visitor::visitType_spec(HydrogenParser::Type_specContext* tspec)
     {
         std::stringstream ss;
         
@@ -55,7 +55,7 @@ namespace hydrogen
             ss << '<' << visitType_spec(tspec->type_id()->type_spec()).as<std::string>() << '>';
         return ss.str();
     }
-    antlrcpp::Any source_visitor::visitExpr(HydrogenParser::ExprContext* expr)
+    antlrcpp::Any debug_visitor::visitExpr(HydrogenParser::ExprContext* expr)
     {
         std::stringstream ss;
         if(expr->NUM())
