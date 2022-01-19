@@ -1,3 +1,2 @@
-def int a = 10
-
-print a
+def int a = 10 + (8 * 5)
+print(a)

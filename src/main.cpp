@@ -1,80 +1,80 @@
-#include <iostream>
-#include <fstream>
-#include <antlr4-runtime.h>
-#include <HydrogenLexer.h>
-#include <HydrogenParser.h>
-#include <debug_visitor.hpp>
-#include <hydrogen_visitor.hpp>
-#include <exit_reason.hpp>
-#include <cstdlib>
-#include <interpreter.hpp>
+#include <cstddef>
+#include <argparse.hpp>
+#include <exit.hpp>
+#include <log.hpp>
+#include <hyc.hpp>
 
-
-#define HY_DEBUG 0
-
-int main(int argc, const char* argv[]) 
+// The main function is responsible for parsing the arguments and passing them to the actual compiler
+// The main function is NOT responsible for checking if those arguments are valid except for their type
+// that is for example it would only check if the optimisation level is actually a number,
+// but it wouldn't check if it is between 0 and 3
+int main(int argc, char** argv)
 {
-    if(argc != 2)
+    hyc::logger::set_log_level(hyc::logger::level::DEBUG);
+    argparse::ArgumentParser prog(hyc::ID.data(), hyc::VER.data());
+    prog.add_argument("--output", "-o")
+        .help("Set output file")
+        .default_value<std::string>("a.out")
+        .required();
+    prog.add_argument("--optimisation", "-O")
+        .help("Set optimisation level")
+        .default_value<std::size_t>(0)
+        .scan<'d', std::size_t>()
+        .required();
+    prog.add_argument("--log-level", "-ll")
+        .help("Set log level")
+        .default_value<std::string>("info")
+        .required();
+    prog.add_argument("filename")
+        .help("Input file");
+    try
     {
-        std::cout << "Usage: " << argv[0] << " <src_file>\n";
-        std::exit(hydrogen::exit::INVALID_USAGE);
+        prog.parse_args(argc, argv);
     }
-
-    std::ifstream stream(argv[1]);
-    if(!stream.is_open())
+    catch(std::runtime_error const& e)
     {
-        std::cout << "Couldn't open file: " << argv[1];
-        std::exit(hydrogen::exit::FILE_OPEN_ERROR);
+        hyc::err << e.what() << hyc::logger::endm;
+        hyc::exit::exit(hyc::exit::INVALID_ARGS, "Error parsing arguments");
     }
+    // Get arguments
+    std::ifstream      input_file        ;
+    std::ofstream      output_file       ;
+    std::size_t        optimisation_level;
+    std::string        log_level_str     ;
+    hyc::logger::level log_level         ;
+    try
+    {
+        input_file.open(     prog.get<std::string>("filename"      ));
+        output_file.open(    prog.get<std::string>("--output"      ));
+        optimisation_level = prog.get<std::size_t>("--optimisation") ;
+        log_level_str      = prog.get<std::string>("--log-level"   ) ;
+    }
+    catch(std::exception const& e)
+    {
+        hyc::err << e.what() << hyc::logger::endm;
+        hyc::exit::exit(hyc::exit::INVALID_ARGS, "Error parsing arguments");
+    }
+    // Check arguments
+    if(!input_file.is_open())
+        hyc::exit::exit(hyc::exit::FILE_ERROR, "Couldn't open input file");
+    if(!output_file.is_open())
+        hyc::exit::exit(hyc::exit::FILE_ERROR, "Couldn't open output file");
+    
+    if(log_level_str == "info")
+        log_level = hyc::logger::level::INFO;
+    else if(log_level_str == "warn")
+        log_level = hyc::logger::level::WARN;
+    else if(log_level_str == "err")
+        log_level = hyc::logger::level::ERR;
+    else if(log_level_str == "verbose")
+        log_level = hyc::logger::level::VERBOSE;
+    else if(log_level_str == "debug")
+        log_level = hyc::logger::level::DEBUG;
+    else if(log_level_str == "none")
+        log_level = hyc::logger::level::NONE;
     else
-    {
-#if HY_DEBUG == 1
-        // DEBUG
-        std::cout << "---------- Lexer ----------\n";
-        stream.close();
-        std::ifstream stream2(argv[1]);
-        antlr4::ANTLRInputStream input2(stream2);
-        HydrogenLexer lexer2(&input2);
-        antlr4::CommonTokenStream tokens2(&lexer2);
-        tokens2.fill();
-        antlr4::dfa::Vocabulary const& vocab = lexer2.getVocabulary();
-        for(antlr4::Token* t : tokens2.getTokens())
-        {
-            std::string rule_name;
-            std::string rule_txt = t->getText();
-            if(rule_txt == "\n") rule_txt = "\\n";
-            else if(rule_txt == "\t") rule_txt = "\\t";
-            else if(rule_txt == "\r") rule_txt = "\\r";
-            
-            rule_name = vocab.getSymbolicName(t->getType());
+        hyc::exit::exit(hyc::exit::INVALID_ARGS, "Unknown log level: " + log_level_str);
 
-            std::cout << rule_name << '(' << rule_txt << ')' << ' ';
-        }
-        std::cout << '\n';
-        stream2.close();
-        stream.open(argv[1]);
-        // END DBUG
-#endif
-        antlr4::ANTLRInputStream input(stream);
-        HydrogenLexer lexer(&input);
-        antlr4::CommonTokenStream tokens(&lexer);
-
-
-        HydrogenParser parser(&tokens);
-        HydrogenParser::SourceContext* tree;
-        tree = parser.source();
-#if HY_DEBUG == 1
-        hydrogen::debug_visitor d_visitor;
-        std::cout << "---------- Parser ---------\n";
-        std::cout << d_visitor.visitSource(tree).as<std::string>();
-#endif
-        hydrogen::hydrogen_visitor visitor;
-        auto src = visitor.visit_source(tree);
-        hydrogen::interpreter<0> a;
-        a.interpret(src);
-    }
-#if HY_DEBUG == 1
-    std::cout << "Done!\n";
-#endif
-    std::exit(hydrogen::exit::SUCCESS);
+    // Start hyc
+    hyc::start(input_file, output_file, optimisation_level, log_level);
 }
