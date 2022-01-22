@@ -14,8 +14,11 @@ decl_seq: (decl SEP)* decl;
 decl:
     class_decl
   | func_decl
-  | strg_decl;
+  | strg_decl
+  | empty_decl;
 
+// empty
+empty_decl: SEP;
 // Classes
 class_decl:
     attribute_seq? DECL class_sig
@@ -25,26 +28,49 @@ class_block:
     INDENT class_strg_decl_seq DEDENT
   | class_strg_decl;
 class_strg_decl_seq: (class_strg_decl SEP)* class_strg_decl;
-class_strg_decl: class_member_visibility? class_strg_type? ; // TODO: not completed!
+class_strg_decl: class_member_visibility? strg_type? type_id unqualified_id;
 
 // Functions
 func_decl:
     attribute_seq? DECL func_sig
   | attribute_seq? DEF  func_sig COLON stmt_block;
-func_sig: func_scope FUNC func_id PARENL func_arg_seq PARENR;
-func_arg_seq: (func_arg COMMA)* func_arg;
-func_arg: func_arg_type?; // TODO: not completed!
+func_sig: id_scope? FUNC func_id PARENL func_arg_decl_seq PARENR (class_member_visibility? IN type_id)? (RETURNS type_id)?;
+func_arg_decl_seq: (strg_sig COMMA)* strg_sig;
 
+func_call: qualified_id PARENL func_arg_seq PARENL;
+func_arg_seq: (expression COMMA)* expression;
 
 // Storage
 strg_decl: 
     attribute_seq? DECL strg_sig
-  | attribute_seq? DEF  strg_sig;
-strg_sig: ; // TODO: not completed!
+  | attribute_seq? DEF  strg_sig (ASSIGN expression)?;
+strg_sig: id_scope? type_id unqualified_id;
 
 // Statements
-stmt_block: (stmt SEP)* stmt;
-stmt: ;
+stmt_block: SEP INDENT stmt_seq SEP DEDENT | stmt;
+
+stmt_seq: (stmt SEP)* stmt;
+
+print_stmt: PRINT expression;
+
+ret_stmt: RETURN expression;
+
+if_stmt: IF expression COLON stmt_block elif_stmt* else_stmt?;
+elif_stmt: ELIF expression COLON stmt_block;
+else_stmt: ELSE COLON stmt_block;
+
+while_stmt: WHILE expression COLON stmt_block;
+
+empty_stmt: SEP;
+
+stmt: 
+    expression
+  | print_stmt
+  | ret_stmt
+  | if_stmt
+  | while_stmt
+  | empty_stmt;
+
 
 // Expressions
 expression: expression_or (assignment_op expression_or)*;
@@ -64,8 +90,8 @@ expression_postfix : expression_primary | expression_postfix postfix_op    ;
 expression_primary :
     literal
   | PARENL expression PARENR
-  | expression_id;
-expression_id: ID;
+  | qualified_id
+  | func_call;
 
 // Attributes
 
@@ -77,11 +103,18 @@ attribute: BRACKL BRACKL attribute_id BRACKR BRACKR;
 // class
 class_id: ID;
 class_member_visibility: PUBLIC | PROTECTED | PRIVATE;
-class_strg_type: VAR | CONST;
 // func
 func_id: ID;
-func_scope: GLOBAL | LOCAL;
-func_arg_type: VAR | CONST;
+// strg
+strg_type: VAR | CONST;
+strg_id: ID;
+// ids
+type_id: qualified_id;
+
+qualified_id: unqualified_id? (NAMESPACE_SEP unqualified_id)*;
+unqualified_id: ID;
+
+id_scope: GLOBAL | LOCAL;
 // expressions
 assignment_op:
     ASSIGN

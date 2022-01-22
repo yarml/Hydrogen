@@ -12,13 +12,12 @@ namespace hyc
         std::cout << std::flush;
     }
 
-    logger::level logger::s_log_level;
     logger::smsg const logger::endm = logger::smsg::END_MSG;
 
     template<>
     void logger::write<logger::smsg>(logger::smsg const& s_msg)
     {
-        if(static_cast<std::size_t>(m_log_level) <= static_cast<std::size_t>(s_log_level))
+        if(static_cast<std::size_t>(m_log_level) <= static_cast<std::size_t>(config::log_level()))
         {
             switch(s_msg)
             {

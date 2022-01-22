@@ -12,9 +12,11 @@ namespace hyc
     constexpr std::string_view VER  = "0.0.1"            ;
 
     void start(
-        std::istream const& input_stream      ,
-        std::ostream const& output_stream     ,
-        int                 optimisation_level,
-        logger::level       log_level
+        std::string const& file_name         ,
+        std::istream&      input_stream      ,
+        std::ostream&      output_stream     ,
+        int                optimisation_level,
+        logger::level      log_level         ,
+        bool               debug_mode
     );
 }

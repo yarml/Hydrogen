@@ -8,6 +8,8 @@ rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(
 # Begin configuration
 MKDIR := mkdir -p
 RM := rm -rf
+CD := cd
+CP := cp
 TOUCH := touch
 CXX := clang++ -g -ferror-limit=1 -std=c++20 -c -o
 LINKER := clang++ -g -ferror-limit=1 -std=c++20 -o
@@ -21,6 +23,8 @@ GRAMMARS_DIR := grammars
 SRC_DIR := src
 
 BUILD_DIR := build
+
+HYC_FLAGS := -d -ll debug -o test input.hy
 # End configration
 
 SRC_FILES := $(call rwildcard,$(SRC_DIR),*.cpp)
@@ -51,9 +55,16 @@ grammars: $(GRAMMARS)
 
 clean:
 	$(info Cleaning...)
-	@$(RM) build
+	@$(RM) $(BUILD_DIR)
 
+run: hyc input
+	@$(CD) $(BUILD_DIR) && ./$(notdir $(OUTPUT)) $(HYC_FLAGS)
+
+input: $(BUILD_DIR)/input.hy
+	
 # End targets
+$(BUILD_DIR)/input.hy:
+	@$(CP) examples/input.hy $(BUILD_DIR)
 
 # Begin target templates
 $(OBJ_DIR)/%.cpp.o: %.cpp

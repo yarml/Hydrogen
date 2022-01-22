@@ -3,20 +3,15 @@ lexer grammar HydrogenLexer;
 options
 {
     language=Cpp;
-    superClass=hydrogen_lexer_base;
 }
 
-@header
-{
-#include <hydrogen_lexer_base.hpp>
-}
-
-tokens { INDENT, DEDENT }
-
+// Indentation
+INDENT: '{@+}';
+DEDENT: '{@-}';
 // -Keywords
 // --Debug
 PRINT    : 'print';
-// --Standard
+// --Declaration
 DEF      : 'def'      ;
 DECL     : 'decl'     ;
 PUBLIC   : 'public'   ;
@@ -28,23 +23,29 @@ VAR      : 'var'      ;
 CONST    : 'const'    ;
 FUNC     : 'func'     ;
 CLASS    : 'class'    ;
-RETURN   : 'return'   ;
 RETURNS  : 'returns'  ;
+IN       : 'in'       ;
+// --Statements
+RETURN   : 'return'   ;
+
 IF       : 'if'       ;
 ELIF     : 'elif'     ;
 ELSE     : 'else'     ;
+
 FOR      : 'for'      ;
 FOREACH  : 'foreach'  ;
+
 WHILE    : 'while'    ;
 DO       : 'do'       ;
-IN       : 'in'       ;
+
 IMPORT   : 'import'   ;
 FROM     : 'from'     ;
 
-// -Statement separator
-SEP  : '\n' | ';';
-COLON: ':'       ;
-COMMA: ','       ;
+// -Separators
+SEP          : '\n' | ';';
+COLON        : ':'       ;
+COMMA        : ','       ;
+NAMESPACE_SEP: '::'      ;
 // -Operators
 // --Assignment
 // ---Algebric assignement

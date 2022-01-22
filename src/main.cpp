@@ -10,7 +10,6 @@
 // but it wouldn't check if it is between 0 and 3
 int main(int argc, char** argv)
 {
-    hyc::logger::set_log_level(hyc::logger::level::DEBUG);
     argparse::ArgumentParser prog(hyc::ID.data(), hyc::VER.data());
     prog.add_argument("--output", "-o")
         .help("Set output file")
@@ -25,6 +24,11 @@ int main(int argc, char** argv)
         .help("Set log level")
         .default_value<std::string>("info")
         .required();
+    prog.add_argument("--debug", "-d")
+        .help("Enable debug mode")
+        .default_value<bool>(false)
+        .implicit_value(true)
+        .required();
     prog.add_argument("filename")
         .help("Input file");
     try
@@ -37,14 +41,16 @@ int main(int argc, char** argv)
         hyc::exit::exit(hyc::exit::INVALID_ARGS, "Error parsing arguments");
     }
     // Get arguments
+    std::string file_name = prog.get<std::string>("filename");
     std::ifstream      input_file        ;
     std::ofstream      output_file       ;
     std::size_t        optimisation_level;
     std::string        log_level_str     ;
     hyc::logger::level log_level         ;
+    bool               debug_mode = prog.get<bool>("--debug");
     try
     {
-        input_file.open(     prog.get<std::string>("filename"      ));
+        input_file.open(     file_name                              );
         output_file.open(    prog.get<std::string>("--output"      ));
         optimisation_level = prog.get<std::size_t>("--optimisation") ;
         log_level_str      = prog.get<std::string>("--log-level"   ) ;
@@ -76,5 +82,5 @@ int main(int argc, char** argv)
         hyc::exit::exit(hyc::exit::INVALID_ARGS, "Unknown log level: " + log_level_str);
 
     // Start hyc
-    hyc::start(input_file, output_file, optimisation_level, log_level);
+    hyc::start(file_name, input_file, output_file, optimisation_level, log_level, debug_mode);
 }
