@@ -1,13 +1,8 @@
 lexer grammar HydrogenLexer;
 
-options
-{
-    language=Cpp;
-}
-
 // Indentation
-INDENT: '{@+}';
-DEDENT: '{@-}';
+INDENT: '\n{@+}';
+DEDENT: '\n{@-}';
 // -Keywords
 // --Debug
 PRINT    : 'print';
@@ -25,6 +20,7 @@ FUNC     : 'func'     ;
 CLASS    : 'class'    ;
 RETURNS  : 'returns'  ;
 IN       : 'in'       ;
+NAMESPACE: 'namespace';
 // --Statements
 RETURN   : 'return'   ;
 

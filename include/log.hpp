@@ -11,13 +11,13 @@ namespace hyc
     public:
         enum class level
         {
-            INFO   ,
-            NOTE   ,
-            WARN   ,
+            NONE   ,
             ERR    ,
+            WARN   ,
+            NOTE   ,
+            INFO   ,
             VERBOSE,
-            DEBUG  ,
-            NONE
+            DEBUG
         };
     private:
         enum class smsg

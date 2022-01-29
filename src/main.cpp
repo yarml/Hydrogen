@@ -22,7 +22,7 @@ int main(int argc, char** argv)
         .required();
     prog.add_argument("--log-level", "-ll")
         .help("Set log level")
-        .default_value<std::string>("info")
+        .default_value<std::string>("err")
         .required();
     prog.add_argument("--debug", "-d")
         .help("Enable debug mode")

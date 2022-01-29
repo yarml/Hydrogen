@@ -7,7 +7,8 @@
 
 namespace hyc
 {
-    using token_stream = std::unique_ptr<antlr4::CommonTokenStream>;
+    using token_stream     = antlr4::CommonTokenStream;
+    using token_stream_ptr = std::unique_ptr<antlr4::CommonTokenStream>;
 
-    token_stream lex(std::istream& istream);
+    token_stream_ptr lex(std::istream& istream);
 }

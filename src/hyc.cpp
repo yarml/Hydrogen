@@ -3,6 +3,7 @@
 #include <config.hpp>
 
 #include <interface/lexer.hpp>
+#include <interface/parser.hpp>
 
 namespace hyc
 {
@@ -22,7 +23,7 @@ namespace hyc
         verbose << "Log level set to         : " << static_cast<std::size_t>(log_level) << logger::endm;
         verbose << "Debug mode               : " << debug_mode                          << logger::endm;
         
-        token_stream ts = lex(input_stream);
-        
+        token_stream_ptr ts = lex(input_stream);
+        tree_ptr ptree = parse(ts);
     }
 }

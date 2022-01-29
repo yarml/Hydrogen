@@ -22,6 +22,8 @@ LINK_FLAGS := -lantlr4-runtime
 GRAMMARS_DIR := grammars
 SRC_DIR := src
 
+EXAMPLES := examples
+
 BUILD_DIR := build
 
 HYC_FLAGS := -d -ll debug -o test input.hy
@@ -63,8 +65,8 @@ run: hyc input
 input: $(BUILD_DIR)/input.hy
 	
 # End targets
-$(BUILD_DIR)/input.hy:
-	@$(CP) examples/input.hy $(BUILD_DIR)
+$(BUILD_DIR)/input.hy: $(EXAMPLES)/input.hy
+	@$(CP) $(EXAMPLES)/input.hy $(BUILD_DIR)
 
 # Begin target templates
 $(OBJ_DIR)/%.cpp.o: %.cpp

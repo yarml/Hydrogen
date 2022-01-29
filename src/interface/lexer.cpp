@@ -6,7 +6,9 @@
 
 namespace hyc
 {
-    static void lexer_print_debug(HydrogenLexer& lexer, token_stream& ts)
+    std::unique_ptr<HydrogenLexer> s_plexer;
+    std::unique_ptr<antlr4::ANTLRInputStream> s_pinputs;
+    static void lexer_print_debug(HydrogenLexer& lexer, token_stream_ptr& ts)
     {
         ts->fill();
         antlr4::dfa::Vocabulary const& vocab = lexer.getVocabulary();
@@ -21,15 +23,15 @@ namespace hyc
             verbose << rule_name << '(' << rule_text << ')' << ' ';
         }
         verbose << "\n-------------------------" << logger::endm;
-        ts->seek(0);
+        ts->reset();
     }
-    token_stream lex(std::istream& istream)
+    token_stream_ptr lex(std::istream& istream)
     {
-        antlr4::ANTLRInputStream input(istream);
-        HydrogenLexer lexer(&input);
-        token_stream ts = std::make_unique<token_stream::element_type>(&lexer);
+        s_pinputs = std::make_unique<antlr4::ANTLRInputStream>(istream);
+        s_plexer = std::make_unique<HydrogenLexer>(s_pinputs.get());
+        token_stream_ptr ts = std::make_unique<token_stream>(s_plexer.get());
         if(config::debug_mode())
-            lexer_print_debug(lexer, ts);
+            lexer_print_debug(*s_plexer, ts);
         return ts;
     }
 }
