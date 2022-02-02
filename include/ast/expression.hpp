@@ -6,17 +6,46 @@
 
 namespace hyc::ast
 {
-    enum class expr_type { ATOMIC, UNARY, BINARY };
-    enum class atomic_expr_type { LITERAL, EXPR, IDENTIFIER, FUNC_CALL };
+    enum class atomic_expr_type { LITERAL, IDENTIFIER, FUNC_CALL };
     enum class literal_expr_type { INT, FLOAT, BOOL, CHAR, STR };
+    enum class unary_op { YES, INV, INCR, DECR };
+    enum class unary_op_pos { BEFORE, AFTER };
+    enum class binop
+    { 
+        ASSIGN, 
+        ASSIGN_ADD, ASSIGN_SUB, 
+        ASSIGN_MUL, ASSIGN_DIV, ASSIGN_MOD,
+        ASSIGN_SHIFTL, ASSIGN_SHIFTR,
+        ASSIGN_AND, ASSIGN_OR, ASSIGN_XOR,
+        EQUAL, NOT_EQUAL,
+        GREATER, LESS, GREAT_EQ, LESS_EQ,
+        SHIFTL, SHIFTR,
+        ADD, SUB,
+        MUL, DIV, MOD
+    };
 
     struct expr : public node
     {
-        expr_type type;
     };
 
     using expr_ptr = std::unique_ptr<expr>;
-    
+    // composite expression expressions
+    struct unary_expr : public expr
+    {
+        expr_ptr expr;
+        unary_op_pos op_pos;
+        unary_op op;
+    };
+
+    struct binary_expr : public expr
+    {
+        binop op;
+    };
+
+    using unary_expr_ptr = std::unique_ptr<unary_expr>;
+    using binary_expr_ptr = std::unique_ptr<binary_expr>;
+
+    // Atmoic expressions
     struct atomic_expr : public expr
     {
         atomic_expr_type atom_type;

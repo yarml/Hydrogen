@@ -179,7 +179,7 @@ namespace hyc
             debug << psl->val;
             pl = std::move(psl);
         }
-        pl->type = expr_type::ATOMIC;
+//        pl->type = expr_type::ATOMIC;
         pl->atom_type = atomic_expr_type::LITERAL;
         populate_node(pl.get(), literal);
         return pl;
@@ -187,7 +187,7 @@ namespace hyc
     static func_call_ptr build_func_call(HydrogenParser::Func_callContext* fc)
     {
         func_call_ptr pfc = std::make_unique<func_call>();
-        pfc->type = expr_type::ATOMIC;
+//        pfc->type = expr_type::ATOMIC;
         pfc->atom_type = atomic_expr_type::FUNC_CALL;
         pfc->func_id = build_qualified_id(fc->qualified_id());
         if(fc->func_arg_seq())
@@ -199,24 +199,54 @@ namespace hyc
     static id_expr_ptr build_id_expr(HydrogenParser::Qualified_idContext* qid)
     {
         id_expr_ptr pidexpr = std::make_unique<id_expr>();
-        pidexpr->type = expr_type::ATOMIC;
+//        pidexpr->type = expr_type::ATOMIC;
         pidexpr->atom_type = atomic_expr_type::IDENTIFIER;
         pidexpr->identifier = build_qualified_id(qid);
         populate_node(pidexpr.get(), qid);
         debug << *(pidexpr->identifier);
         return pidexpr;
     }
+    static std::string get_op(HydrogenParser::ExpressionContext* expr)
+    {
+#define GET_OP_HANDLE(op) if(expr->op()) return expr->op()->getText();
+        GET_OP_HANDLE(postfix_op)
+        GET_OP_HANDLE(prefix_op)
+        GET_OP_HANDLE(prod_op)
+        GET_OP_HANDLE(sum_op)
+        GET_OP_HANDLE(bitshift_op)
+        GET_OP_HANDLE(rel_comp_op)
+        GET_OP_HANDLE(equality_op)
+        GET_OP_HANDLE(BIT_AND)
+        GET_OP_HANDLE(BIT_XOR)
+        GET_OP_HANDLE(BIT_OR)
+        GET_OP_HANDLE(AND)
+        GET_OP_HANDLE(OR)
+#undef GET_OP_HANDLE
+        parse_error(expr, "Unknown operator in: " + expr->getText());
+    }
     static expr_ptr build_expression(HydrogenParser::ExpressionContext* expr)
     {
         if(expr->literal())
             return build_literal(expr->literal());
-        if(expr->PARENL() && expr->expression().size() == 1 && expr->PARENR())
-            return build_expression(expr->expression()[0]);
         if(expr->func_call())
             return build_func_call(expr->func_call());
         if(expr->qualified_id())
             return build_id_expr(expr->qualified_id());
-        return nullptr;
+        auto exprs = expr->expression(); // why tf do they return a new vector each time smh
+        if(expr->PARENL() && exprs.size() == 1 && expr->PARENR())
+            return build_expression(exprs[0]);
+        // we have a composite expression here, probably
+        func_call_ptr pfc = std::make_unique<func_call>();
+        pfc->atom_type = atomic_expr_type::FUNC_CALL;
+        for(auto* subexpr : exprs)
+            pfc->args.push_back(build_expression(subexpr));
+        pfc->func_id = std::make_unique<qualified_id>();
+        pfc->func_id->namespaces.push_back("__root__");
+        pfc->func_id->identifier = "__operator__" + get_op(expr);
+        populate_node(pfc->func_id.get(), expr);
+        populate_node(pfc.get(), expr);
+        debug << "operator call: " << *(pfc->func_id);
+        return pfc;
     }
     static qualified_id_ptr build_qualified_id(HydrogenParser::Unqualified_idContext* uqid)
     {
@@ -277,7 +307,7 @@ namespace hyc
     static expr_ptr default_value(type_id_ptr& type)
     {
         func_call_ptr pfunc_call = std::make_unique<func_call>();
-        pfunc_call->type = expr_type::ATOMIC;
+//        pfunc_call->type = expr_type::ATOMIC;
         pfunc_call->atom_type = atomic_expr_type::FUNC_CALL;
         pfunc_call->func_id = std::make_unique<qualified_id>();
         std::copy(type->namespaces.begin(), type->namespaces.end(), std::back_inserter(pfunc_call->func_id->namespaces));
