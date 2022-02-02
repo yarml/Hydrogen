@@ -45,23 +45,177 @@ namespace hyc
         qualified_id_ptr pqid = std::make_unique<qualified_id>();
         auto vec = qid->unqualified_id();
         if(qid->global_namespace)
-            pqid->namespaces.push_back("__global__");
+            pqid->namespaces.push_back("__root__");
         else
-            pqid->namespaces.push_back("__this__");
+            pqid->namespaces.push_back("__auto__"); // __auto__ means look in __this__, if not found then in __root__
         for(auto it = vec.begin(); it != vec.end() - 1; ++it)
             pqid->namespaces.push_back((*it)->getText());
         pqid->identifier = vec.back()->getText();
         populate_node(pqid.get(), qid);
         debug << "qualifiedid: ";
-        if(config::log_level() == logger::level::DEBUG)
-            for(std::string const& ns : pqid->namespaces)
-                debug << ns << "::";
-        debug << pqid->identifier << '\n';
+        debug << *pqid;
         return pqid;
+    }
+    static expr_ptr build_expression(HydrogenParser::ExpressionContext* expr);
+    static int read_int(antlr4::tree::TerminalNode* node)
+    {
+        std::string str = node->getText();
+        std::remove_if(str.begin(), str.end(), [](char c) { return c == '_'; });
+        try
+        {
+            if(str.starts_with("0x"))
+                return std::stoi(str.substr(2), nullptr, 16);
+            if(str.starts_with("0c"))
+                return std::stoi(str.substr(2), nullptr,  8);
+            if(str.starts_with("0b"))
+                return std::stoi(str.substr(2), nullptr,  2);
+            return std::stoi(str, nullptr, 10);
+        }
+        catch(std::exception const& e)
+        {
+            parse_error(node, "Couldn't parse integer: " + str);
+        }
+    }
+    static float read_float(antlr4::tree::TerminalNode* node)
+    {
+        std::string str = node->getText();
+        try
+        {
+            return std::stof(str);
+        }
+        catch(std::exception const& e)
+        {
+            parse_error(node, "Couldn't parse float: " + str);
+        }
+    }
+    static bool read_bool(antlr4::tree::TerminalNode* node)
+    {
+        std::string str = node->getText();
+        if(str == "true")
+            return true;
+        if(str == "false")
+            return false;
+        parse_error(node, "Couldn't parse boolean: " + str);
+    }
+    static char read_escaped_char(char c, antlr4::tree::TerminalNode* blame)
+    {
+        switch(c)
+        {
+            case '\'': return '\'';
+            case '"' : return '"' ;
+            case '?' : return '?' ;
+            case '\\': return '\\';
+            case 'a' : return '\a';
+            case 'b' : return '\b';
+            case 'f' : return '\f';
+            case 'n' : return '\n';
+            case 'r' : return '\r';
+            case 't' : return '\t';
+            case 'v' : return '\v';
+            default: parse_error(blame, std::string("Couldn't parse escaped char: '\\") + c + std::string("'"));
+        }
+    }
+    static char read_char(antlr4::tree::TerminalNode* node)
+    {
+        std::string str = node->getText().substr(1, node->getText().size() - 2);
+        if(str.size() == 1)
+            return str[0];
+        else if(str.size() == 2 && str[0] == '\\')
+            return read_escaped_char(str[1], node);
+        else
+            parse_error(node, "Invalid char length: " + node->getText());
+    }
+    static std::string read_string(antlr4::tree::TerminalNode* node)
+    {
+        std::string str = node->getText().substr(1, node->getText().size() - 2);
+        std::stringstream ss;
+        for(auto it = str.begin(); it != str.end(); ++it)
+            if(*it == '\\')
+                ss << read_escaped_char(*(++it), node);
+            else
+                ss << *it;
+        return ss.str();
+    }
+    static literal_ptr build_literal(HydrogenParser::LiteralContext* literal)
+    {
+        literal_ptr pl;
+        if(literal->INT())
+        {
+            int_literal_ptr pil = std::make_unique<int_literal>();
+            pil->literal_type = literal_expr_type::INT;
+            pil->val = read_int(literal->INT());
+            debug << pil->val;
+            pl = std::move(pil);
+        }
+        else if(literal->FLOAT())
+        {
+            float_literal_ptr pfl = std::make_unique<float_literal>();
+            pfl->literal_type = literal_expr_type::FLOAT;
+            pfl->val = read_float(literal->FLOAT());
+            debug << pfl->val;
+            pl = std::move(pfl);
+        }
+        else if(literal->BOOL())
+        {
+            bool_literal_ptr pbl = std::make_unique<bool_literal>();
+            pbl->literal_type = literal_expr_type::BOOL;
+            pbl->val = read_bool(literal->BOOL());
+            debug << pbl->val;
+            pl = std::move(pbl);
+        }
+        else if(literal->CHR())
+        {
+            char_literal_ptr pcl = std::make_unique<char_literal>();
+            pcl->literal_type = literal_expr_type::CHAR;
+            pcl->val = read_char(literal->CHR());
+            debug << pcl->val;
+            pl = std::move(pcl);
+        }
+        else if(literal->STR())
+        {
+            str_literal_ptr psl = std::make_unique<str_literal>();
+            psl->literal_type = literal_expr_type::STR;
+            psl->val = read_string(literal->STR());
+            debug << psl->val;
+            pl = std::move(psl);
+        }
+        pl->type = expr_type::ATOMIC;
+        pl->atom_type = atomic_expr_type::LITERAL;
+        populate_node(pl.get(), literal);
+        return pl;
+    }
+    static func_call_ptr build_func_call(HydrogenParser::Func_callContext* fc)
+    {
+        func_call_ptr pfc = std::make_unique<func_call>();
+        pfc->type = expr_type::ATOMIC;
+        pfc->atom_type = atomic_expr_type::FUNC_CALL;
+        pfc->func_id = build_qualified_id(fc->qualified_id());
+        if(fc->func_arg_seq())
+            for(HydrogenParser::ExpressionContext* argexpr : fc->func_arg_seq()->expression())
+                pfc->args.push_back(build_expression(argexpr));
+        populate_node(pfc.get(), fc);
+        return pfc;
+    }
+    static id_expr_ptr build_id_expr(HydrogenParser::Qualified_idContext* qid)
+    {
+        id_expr_ptr pidexpr = std::make_unique<id_expr>();
+        pidexpr->type = expr_type::ATOMIC;
+        pidexpr->atom_type = atomic_expr_type::IDENTIFIER;
+        pidexpr->identifier = build_qualified_id(qid);
+        populate_node(pidexpr.get(), qid);
+        debug << *(pidexpr->identifier);
+        return pidexpr;
     }
     static expr_ptr build_expression(HydrogenParser::ExpressionContext* expr)
     {
-        debug << "Building expression ya3ni\n";
+        if(expr->literal())
+            return build_literal(expr->literal());
+        if(expr->PARENL() && expr->expression().size() == 1 && expr->PARENR())
+            return build_expression(expr->expression()[0]);
+        if(expr->func_call())
+            return build_func_call(expr->func_call());
+        if(expr->qualified_id())
+            return build_id_expr(expr->qualified_id());
         return nullptr;
     }
     static qualified_id_ptr build_qualified_id(HydrogenParser::Unqualified_idContext* uqid)
@@ -69,7 +223,7 @@ namespace hyc
         qualified_id_ptr pqid = std::make_unique<qualified_id>();
         pqid->identifier = uqid->getText();
         populate_node(pqid.get(), uqid);
-        debug << "qualifiedid(unqualified specified): " << pqid->identifier << '\n';
+        debug << "qualifiedid(unqualified): " << pqid->identifier << '\n';
         return pqid;
     }
     static scope_ptr build_scope(HydrogenParser::Id_scopeContext* idscope)
@@ -130,8 +284,7 @@ namespace hyc
         pfunc_call->func_id->namespaces.push_back(type->identifier);
         pfunc_call->func_id->identifier = "__default__value__";
         debug << "Default expression: ";
-        if(config::log_level() == logger::level::DEBUG)
-            debug << *(pfunc_call->func_id);
+        debug << *(pfunc_call->func_id);
         debug << "()\n";
         return pfunc_call;
     }
@@ -157,10 +310,12 @@ namespace hyc
             psdef->type      = build_qualified_id(sdef->strg_sig()->type_id()->qualified_id());
             psdef->scope     = build_scope(sdef->strg_sig()->id_scope());
             psdef->id        = build_qualified_id(sdef->strg_sig()->unqualified_id());
+            debug << "Assign expression: ";
             if(sdef->expression())
                 psdef->default_value = build_expression(sdef->expression());
             else
                 psdef->default_value = default_value(psdef->type);
+            debug << '\n';
             pdecl = std::move(psdef);
         }
         else

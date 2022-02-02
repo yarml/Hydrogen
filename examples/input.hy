@@ -1,8 +1,2 @@
-def global std::vector a = 10
-# Heey
-
-## AHAHAHA 
-
-dede
-
-##
+def global ::std::vector a = f(10)
+def global std::string b = "Hello,\v dad"

@@ -10,7 +10,7 @@ source: decl_seq EOF;
 
 sep: SEP+;
 
-decl_seq: (decl sep)* decl sep;
+decl_seq: (decl sep)* decl SEP*;
 
 decl:
   attribute_seq?
@@ -43,7 +43,7 @@ func_def: func_sig COLON stmt_block;
 func_sig: id_scope? FUNC func_id PARENL func_arg_decl_seq PARENR (class_member_visibility? IN type_id)? (RETURNS type_id)?;
 func_arg_decl_seq: (strg_sig COMMA)* strg_sig?;
 
-func_call: qualified_id PARENL func_arg_seq PARENR;
+func_call: qualified_id PARENL func_arg_seq? PARENR;
 func_arg_seq: (expression COMMA)* expression;
 
 // Storage
@@ -135,7 +135,7 @@ strg_id: ID;
 // ids
 type_id: qualified_id;
 
-qualified_id: global_namespace=NAMESPACE_SEP? unqualified_id? (NAMESPACE_SEP unqualified_id)*;
+qualified_id: global_namespace=NAMESPACE_SEP? unqualified_id (NAMESPACE_SEP unqualified_id)*;
 unqualified_id: ID;
 
 id_scope: GLOBAL | LOCAL;

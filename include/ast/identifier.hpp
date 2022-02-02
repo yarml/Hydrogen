@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <ast/node.hpp>
-#include <iostream>
+#include <log.hpp>
 
 namespace hyc::ast
 {
@@ -21,15 +21,15 @@ namespace hyc::ast
         std::vector<std::string> namespaces;
         std::string              identifier;
 
-        friend std::ostream& operator<<(std::ostream&, qualified_id const&);
+        friend hyc::logger& operator<<(hyc::logger&, qualified_id const&);
     };
 
 
-    inline std::ostream& operator<<(std::ostream& o, qualified_id const& qid)
+    inline hyc::logger& operator<<(hyc::logger& l, qualified_id const& qid)
     {
         for(std::string const& ns : qid.namespaces)
-                o << ns << "::";
-        o << qid.identifier;
-        return o;
+                l << ns << "::";
+        l << qid.identifier;
+        return l;
     }
 }

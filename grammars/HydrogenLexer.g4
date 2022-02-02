@@ -95,16 +95,13 @@ fragment TRUE : 'true' ;
 fragment FALSE: 'false';
 BOOL: TRUE | FALSE;
 // -- Numbers
-fragment DEC:       [0-9_]      +;
-fragment BIN: '0b'  [01_]       +;
-fragment OCT: '0c'  [0-7_]      +;
-fragment HEX: '0x'  [0-9A-Fa-f_]+;
+fragment DEC:      [0-9_]      +;
+fragment BIN: '0b' [01_]       +;
+fragment OCT: '0c' [0-7_]      +;
+fragment HEX: '0x' [0-9A-Fa-f_]+;
 
-fragment INT_SUFFIX  : [iI];
-fragment FLOAT_SUFFIX: [fF];
-
-INT  : (DEC | BIN | OCT | HEX) INT_SUFFIX  ?;
-FLOAT: (DEC? '.' DEC         ) FLOAT_SUFFIX?;
+INT  : (DEC | BIN | OCT | HEX);
+FLOAT: (DEC? '.' DEC         );
 // -- identifiers
 ID    : [a-zA-Z_] [a-zA-Z0-9_]*;
 
