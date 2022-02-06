@@ -1,5 +1,6 @@
 #include <hyc.hpp>
 #include <log.hpp>
+#include <lexer.hpp>
 
 namespace hyc
 {
@@ -11,6 +12,9 @@ namespace hyc
         bool               debug_mode
     )
     {
-        spdlog::debug("Starting hyc with filename={} opt_level={} debug_mode={}", file_name, optimisation_level, debug_mode);
+        spdlog::debug("hyc with filename={} opt_level={} debug_mode={}", file_name, optimisation_level, debug_mode);
+
+        lex::lexer l(input_stream);
+        l.lex();
     }
 }
