@@ -1,6 +1,11 @@
 # Hydrogen
 Hydrogen language compiler
 
+# Test branch
+This branch is to try and handwrite a lexer and parser
+
+If it is successful, then this will become the main branch
+
 # TODO:
 Write this page
 
