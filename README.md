@@ -4,7 +4,10 @@ Hydrogen language compiler
 # Test branch
 This branch is to try and handwrite a lexer and parser
 
-If it is successful, then this will become the main branch
+If it is successful, then this will be merged with the main branch
+
+# Build dependencies
+`spdlog`
 
 # TODO:
 Write this page
