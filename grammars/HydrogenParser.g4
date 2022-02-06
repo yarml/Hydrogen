@@ -40,7 +40,8 @@ class_strg_decl: class_member_visibility? strg_type? type_id unqualified_id;
 // Functions
 func_decl: func_sig;
 func_def: func_sig COLON stmt_block;
-func_sig: id_scope? FUNC func_id PARENL func_arg_decl_seq PARENR (class_member_visibility? IN type_id)? (RETURNS type_id)?;
+func_sig: id_scope? FUNC func_id PARENL func_arg_decl_seq PARENR (ACCESS access_type_id_seq)? (RETURNS type_id)?;
+access_type_id_seq: (type_id COMMA)* type_id;
 func_arg_decl_seq: (strg_sig COMMA)* strg_sig?;
 
 func_call: qualified_id PARENL func_arg_seq? PARENR;
@@ -66,12 +67,15 @@ else_stmt: ELSE COLON stmt_block;
 
 while_stmt: WHILE expression COLON stmt_block;
 
+simple_stmt: BREAK | CONTINUE | RETURN;
+
 stmt: 
     expression
   | print_stmt
   | ret_stmt
   | if_stmt
-  | while_stmt;
+  | while_stmt
+  | simple_stmt;
 
 
 // Expressions

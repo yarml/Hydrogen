@@ -256,6 +256,13 @@ namespace hyc
         debug << "qualifiedid(unqualified): " << pqid->identifier << '\n';
         return pqid;
     }
+    static qualified_id_ptr build_qualified_id(std::vector<std::string> const& namespaces, std::string id)
+    {
+        qualified_id_ptr pqid = std::make_unique<qualified_id>();
+        pqid->identifier = id;
+        std::copy(namespaces.begin(), namespaces.end(), std::back_inserter(pqid->namespaces));
+        return pqid;
+    }
     static scope_ptr build_scope(HydrogenParser::Id_scopeContext* idscope)
     {
         scope_ptr s = std::make_unique<scope>();
@@ -325,7 +332,7 @@ namespace hyc
         if(decl->strg_decl())
         {
             debug << "START storage declaration\n";
-            auto sdecl = decl->strg_decl();
+            auto* sdecl = decl->strg_decl();
             decl_strg_ptr psdecl = std::make_unique<decl_strg>();
             psdecl->type      = build_qualified_id(sdecl->strg_sig()->type_id()->qualified_id());
             psdecl->scope     = build_scope(sdecl->strg_sig()->id_scope());
@@ -335,7 +342,7 @@ namespace hyc
         else if(decl->strg_def())
         {
             debug << "START storage definition\n";
-            auto sdef = decl->strg_def();
+            auto* sdef = decl->strg_def();
             decl_strg_ptr psdef = std::make_unique<decl_strg>();
             psdef->type      = build_qualified_id(sdef->strg_sig()->type_id()->qualified_id());
             psdef->scope     = build_scope(sdef->strg_sig()->id_scope());
@@ -347,6 +354,22 @@ namespace hyc
                 psdef->default_value = default_value(psdef->type);
             debug << '\n';
             pdecl = std::move(psdef);
+        }
+        else if(decl->func_decl())
+        {
+            debug << "START function declaration\n";
+            auto* fsig = decl->func_decl()->func_sig();
+            decl_func_ptr pfdecl = std::make_unique<decl_func>();
+            pfdecl->scope = build_scope(fsig->id_scope());
+            if(fsig->RETURNS())
+                pfdecl->return_type = build_qualified_id(fsig->type_id()->qualified_id());
+            else
+                pfdecl->return_type = build_qualified_id({"__root__"}, "void");
+            auto args = fsig->func_arg_decl_seq()->strg_sig();
+            for(auto* arg : args)
+            {
+                
+            }
         }
         else
             parse_error(decl, "Unknown declaration type in: " + decl->getText());

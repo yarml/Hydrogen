@@ -19,9 +19,11 @@ CONST    : 'const'    ;
 FUNC     : 'func'     ;
 CLASS    : 'class'    ;
 RETURNS  : 'returns'  ;
-IN       : 'in'       ;
+ACCESS   : 'access'   ;
 NAMESPACE: 'namespace';
 // --Statements
+BREAK    : 'break'    ;
+CONTINUE : 'continue' ;
 RETURN   : 'return'   ;
 
 IF       : 'if'       ;
@@ -29,6 +31,7 @@ ELIF     : 'elif'     ;
 ELSE     : 'else'     ;
 
 FOR      : 'for'      ;
+IN       : 'in'       ;
 FOREACH  : 'foreach'  ;
 
 WHILE    : 'while'    ;

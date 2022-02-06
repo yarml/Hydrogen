@@ -28,15 +28,28 @@ namespace hyc::ast
     {
         qualified_id_ptr id           ;
         decl_type_ptr    decl_type    ;
-        expr_ptr         default_value;
     };
 
     struct decl_strg : public decl
     {
         type_id_ptr type ;
         scope_ptr   scope;
+        expr_ptr    default_value;
+    };
+    struct func_arg : public node
+    {
+        type_id_ptr type;
+        qualified_id_ptr id;
+    };
+    using func_arg_ptr = std::unique_ptr<func_arg>;
+    struct decl_func : public decl
+    {
+        scope_ptr scope;
+        type_id_ptr return_type;
+        std::vector<func_arg_ptr> args;
     };
 
     using decl_ptr = std::unique_ptr<decl>;
     using decl_strg_ptr = std::unique_ptr<decl_strg>;
+    using decl_func_ptr = std::unique_ptr<decl_func>;
 }
