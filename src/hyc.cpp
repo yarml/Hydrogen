@@ -15,6 +15,8 @@ namespace hyc
         spdlog::debug("hyc with filename={} opt_level={} debug_mode={}", file_name, optimisation_level, debug_mode);
 
         lex::lexer l(input_stream);
-        l.lex();
+        std::vector<lex::token> tokens = l.lex();
+        for(lex::token const& t : tokens)
+            spdlog::debug("{} at {}:{}: {}", t.get_type(), t.get_line(), t.get_cpos(), t.get_text());
     }
 }

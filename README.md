@@ -37,6 +37,8 @@ The basic usage is `./hyc <filename>`
 
 maybe `./hyc <filename> -o <outputfile>` if you want to specify an output file
 
+The `-cd` flag will enable debug output, which is where the most interesting stuff happens until now
+
 The current version doesn't even output to a file yet so...
 
 # Test

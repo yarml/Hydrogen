@@ -230,3 +230,16 @@ Built-in Hydrogen constexpr functions:
     template <type t> decl constexpr func deref(const ptr<t>) return ref<t>
 
 ##
+
+## Literals
+    Lexer num literals: 
+        Start with 0-9 then optionally repeat 0-9 or _ then optionnaly end with H, D, O or B
+        R [0-9] [0-9_]* [HDOB]?
+    Lexer string literals: 
+        Start with " then optionally repeat either any character other than " or \ followed by any character, then end with "
+        R '"' ( \\. | [^"] )* '"'
+    Lexer char literals:
+        Start with ' then followed by any character except ' or by \ followed by any character, then end with '
+        '\'' ( \\. | [^\'] ) '\''
+
+##

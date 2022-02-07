@@ -1,15 +1,5 @@
-##hewwo##
-def int a=    ##abc(((((([##2;
-func a(ii  
-    id
-  )
-i a = a::b #abc
-    frfr
-(                                frfr
+def global func a(int b, char c) returns float:
+    return 1 + 3 * 0b0101012
+        deded
+        dedede
 
-
-
-
-
-)
-btw #aaa
