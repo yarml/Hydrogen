@@ -1,5 +1,5 @@
-def global func a(int b, char c) returns float:
-    return 1 + 3 * 0b0101012
-        deded
-        dedede
+string a = "bleb"
+
+def func a(string s) returns int:
+    return s.size() + 'a' # This doesn't make sense, but I just wantto try characters
 

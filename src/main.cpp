@@ -1,8 +1,15 @@
 #include <argparse.hpp>
 #include <log.hpp>
 #include <hyc.hpp>
-
 #include <fstream>
+#include <filesystem>
+#include <msg.hpp>
+#include <chrono>
+
+static std::string absolute_path(std::string const& path)
+{
+    return std::filesystem::absolute(std::filesystem::path(path)).string();
+}
 
 int main(int argc , char** argv)
 {
@@ -36,7 +43,7 @@ int main(int argc , char** argv)
     }
     catch(std::runtime_error const& e)
     {
-        spdlog::error("Error parsing arguments: {}", e.what());
+        spdlog::error(hyc::msg::ARG_PARSE_ERROR, e.what());
         std::exit(hyc::exit::INVALID_ARGS);
     }
     std::string file_name  ;
@@ -54,7 +61,7 @@ int main(int argc , char** argv)
     }
     catch(std::exception const& e)
     {
-        spdlog::error("Error parsing arguments: {}", e.what());
+        spdlog::error(hyc::msg::ARG_PARSE_ERROR, e.what());
         std::exit(hyc::exit::INVALID_ARGS);   
     }
     std::ifstream input_file ;
@@ -65,16 +72,15 @@ int main(int argc , char** argv)
     // Check arguments
     if(!input_file.is_open())
     {
-        spdlog::error("Couldn't open file: {}", file_name);
+        spdlog::error(hyc::msg::FILE_OPEN_ERROR, file_name);
         std::exit(hyc::exit::FILE_ERROR);
     }
     if(!output_file.is_open())
     {
-        spdlog::error("Couldn't open file: {}", output_file_name);
+        spdlog::error(hyc::msg::FILE_OPEN_ERROR, output_file_name);
         std::exit(hyc::exit::FILE_ERROR);
     }
     
-
     // Start hyc
-    hyc::start(file_name, input_file, output_file, opt_level, debug_mode);
+    hyc::start(absolute_path(file_name), input_file, output_file, opt_level, debug_mode);
 }
