@@ -1,7 +1,6 @@
 #include <hyc.hpp>
 #include <log.hpp>
 #include <lexer.hpp>
-#include <chrono>
 
 namespace hyc
 {

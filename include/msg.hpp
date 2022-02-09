@@ -22,7 +22,7 @@ namespace hyc::msg
     constexpr cstr BIN_LITERAL            = "binary literal"                                                                        ;
     constexpr cstr OCT_LITERAL            = "octal literal"                                                                         ;
     constexpr cstr HEX_LITERAL            = "hexadecimal literal"                                                                   ;
-    constexpr cstr UNEXPECTED_CHR         = "Unexpected `{0}` at {1}:{2}:{3}"                                                       ;
+    constexpr cstr UNEXPECTED_TOK         = "Unexpected `{0}` at {1}:{2}:{3}"                                                       ;
     constexpr cstr LAST_OPEN_PBKC         = "Unmatched `{0}` is in {1}:{2}:{3}"                                                     ;
     constexpr cstr EXPECTED               = "Expected {0}"                                                                          ;
     constexpr cstr CHR_LITERAL_END        = "`'` to end char literal"                                                             ;
