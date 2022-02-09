@@ -1,9 +1,4 @@
 # Hydrogen
-Hydrogen language compiler
-# Check test branch
-
-Most work will be done in [test] as I am trying to make a handwritten lexer(and perhaps parser too) instead of relying on antlr
-
 ## Why was it created?
 A lot of factors made me decide creating Hydrogen, the first one being my lack of knowledge in C++'s undefined behaviours, which makes me 60% of the time trying to fight the compiler to compile something which looks fine to me
 
