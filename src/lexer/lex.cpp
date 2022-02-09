@@ -22,7 +22,8 @@ namespace hyc::lex
                     id << m_c;
                     readnext();
                 }
-                out.push_back(token(id.str(), token::type::ID, line, cpos));
+                std::string const& idstr = id.str();
+                out.push_back(token(idstr, get_identifier_type(idstr), line, cpos));
                 continue;
             }
             else if(std::isdigit(m_c))
@@ -163,7 +164,8 @@ namespace hyc::lex
             CPLX_BRANCH_NODE('<', '<', '=', '=', ASSIGN_SHIFTL, SHIFTL, LESS_EQ, LESS)
             CPLX_BRANCH_NODE('>', '>', '=', '=', ASSIGN_SHIFTR, SHIFTR, GREAT_EQ, GREATER)
 #undef SINGLE_BRANCH_NODE
-#undef SMTH_BRANCH_NODE
+#undef EQ_SINGLE_BRANCH_NODE
+#undef CPLX_BRANCH_NODE
             else if(m_c == ' ')
                 readnext();
             else // tokens that always only consume 1 character will be treated here

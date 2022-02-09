@@ -20,8 +20,10 @@ namespace hyc::lex
         void readnext();
         void readstream();
 
-        // returns the number of open ()[]{} combined, or -1 if any of them is invalid
+        // returns the number of open ()[]{} combined
         int open_pbck();
+        
+        token::type get_identifier_type(std::string const& id);
 
         // reads the next set of characters c for which condition(c) is true, then pushes them to ss
         void read_int_literal(std::stringstream& ss, func_chr_check condition, char const* literal_name, bool check_empty = true);
