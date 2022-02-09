@@ -1,9 +1,6 @@
 #include <hyc.hpp>
 #include <log.hpp>
-#include <config.hpp>
-
-#include <interface/lexer.hpp>
-#include <interface/parser.hpp>
+#include <lexer.hpp>
 
 namespace hyc
 {
@@ -12,18 +9,14 @@ namespace hyc
         std::istream&      input_stream      ,
         std::ostream&      output_stream     ,
         int                optimisation_level,
-        logger::level      log_level         ,
         bool               debug_mode
     )
     {
-        config::configure(log_level, debug_mode);
-        debug   << "start function called!"                                             << logger::endm;
-        verbose << "Input file name          : " << file_name                           << logger::endm;
-        verbose << "Optimisation level set to: " << optimisation_level                  << logger::endm;
-        verbose << "Log level set to         : " << static_cast<std::size_t>(log_level) << logger::endm;
-        verbose << "Debug mode               : " << debug_mode                          << logger::endm;
+        spdlog::debug("hyc with filename={} opt_level={} debug_mode={}", file_name, optimisation_level, debug_mode);
         
-        token_stream_ptr ts = lex(input_stream);
-        tree_ptr ptree = parse(ts);
+        lex::lexer l(input_stream, file_name);
+        std::vector<lex::token> tokens = l.lex();
+        for(lex::token const& t : tokens)
+            spdlog::debug("{} at {}:{}: {}", t.get_type(), t.get_line(), t.get_cpos(), t.get_text());
     }
 }

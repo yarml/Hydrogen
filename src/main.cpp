@@ -1,86 +1,86 @@
-#include <cstddef>
 #include <argparse.hpp>
-#include <exit.hpp>
 #include <log.hpp>
 #include <hyc.hpp>
+#include <fstream>
+#include <filesystem>
+#include <msg.hpp>
+#include <chrono>
 
-// The main function is responsible for parsing the arguments and passing them to the actual compiler
-// The main function is NOT responsible for checking if those arguments are valid except for their type
-// that is for example it would only check if the optimisation level is actually a number,
-// but it wouldn't check if it is between 0 and 3
-int main(int argc, char** argv)
+static std::string absolute_path(std::string const& path)
 {
+    return std::filesystem::absolute(std::filesystem::path(path)).string();
+}
+
+int main(int argc , char** argv)
+{
+    spdlog::set_pattern("[%^%l%$] %v");
     argparse::ArgumentParser prog(hyc::ID.data(), hyc::VER.data());
     prog.add_argument("--output", "-o")
-        .help("Set output file")
+        .help("Specify output file")
         .default_value<std::string>("a.out")
         .required();
     prog.add_argument("--optimisation", "-O")
-        .help("Set optimisation level")
+        .help("Specify optimisation level")
         .default_value<std::size_t>(0)
         .scan<'d', std::size_t>()
-        .required();
-    prog.add_argument("--log-level", "-ll")
-        .help("Set log level")
-        .default_value<std::string>("err")
         .required();
     prog.add_argument("--debug", "-d")
         .help("Enable debug mode")
         .default_value<bool>(false)
         .implicit_value(true)
         .required();
+    prog.add_argument("--cdebug", "-cd")
+        .help("Output compiler debug information")
+        .default_value<bool>(false)
+        .implicit_value(true)
+        .required();
     prog.add_argument("filename")
         .help("Input file");
+
     try
     {
         prog.parse_args(argc, argv);
     }
     catch(std::runtime_error const& e)
     {
-        hyc::err << e.what() << hyc::logger::endm;
-        hyc::exit::exit(hyc::exit::INVALID_ARGS, "Error parsing arguments");
+        spdlog::error(hyc::msg::ARG_PARSE_ERROR, e.what());
+        std::exit(hyc::exit::INVALID_ARGS);
     }
-    // Get arguments
-    std::string file_name = prog.get<std::string>("filename");
-    std::ifstream      input_file        ;
-    std::ofstream      output_file       ;
-    std::size_t        optimisation_level;
-    std::string        log_level_str     ;
-    hyc::logger::level log_level         ;
-    bool               debug_mode = prog.get<bool>("--debug");
+    std::string file_name  ;
+    std::string output_file_name;
+    std::size_t opt_level  ;
+    bool        debug_mode ;
     try
     {
-        input_file.open(     file_name                              );
-        output_file.open(    prog.get<std::string>("--output"      ));
-        optimisation_level = prog.get<std::size_t>("--optimisation") ;
-        log_level_str      = prog.get<std::string>("--log-level"   ) ;
+        file_name        = prog.get<std::string>("filename"      );
+        output_file_name = prog.get<std::string>("--output"      );
+        opt_level        = prog.get<std::size_t>("--optimisation");
+        debug_mode       = prog.get<bool>(       "--debug"       );
+        if(prog.get<bool>("--cdebug"))
+            spdlog::set_level(spdlog::level::trace); // log everything
     }
     catch(std::exception const& e)
     {
-        hyc::err << e.what() << hyc::logger::endm;
-        hyc::exit::exit(hyc::exit::INVALID_ARGS, "Error parsing arguments");
+        spdlog::error(hyc::msg::ARG_PARSE_ERROR, e.what());
+        std::exit(hyc::exit::INVALID_ARGS);   
     }
+    std::ifstream input_file ;
+    std::ofstream output_file;
+
+    input_file.open( file_name       );
+    output_file.open(output_file_name);
     // Check arguments
     if(!input_file.is_open())
-        hyc::exit::exit(hyc::exit::FILE_ERROR, "Couldn't open input file");
+    {
+        spdlog::error(hyc::msg::FILE_OPEN_ERROR, file_name);
+        std::exit(hyc::exit::FILE_ERROR);
+    }
     if(!output_file.is_open())
-        hyc::exit::exit(hyc::exit::FILE_ERROR, "Couldn't open output file");
+    {
+        spdlog::error(hyc::msg::FILE_OPEN_ERROR, output_file_name);
+        std::exit(hyc::exit::FILE_ERROR);
+    }
     
-    if(log_level_str == "info")
-        log_level = hyc::logger::level::INFO;
-    else if(log_level_str == "warn")
-        log_level = hyc::logger::level::WARN;
-    else if(log_level_str == "err")
-        log_level = hyc::logger::level::ERR;
-    else if(log_level_str == "verbose")
-        log_level = hyc::logger::level::VERBOSE;
-    else if(log_level_str == "debug")
-        log_level = hyc::logger::level::DEBUG;
-    else if(log_level_str == "none")
-        log_level = hyc::logger::level::NONE;
-    else
-        hyc::exit::exit(hyc::exit::INVALID_ARGS, "Unknown log level: " + log_level_str);
-
     // Start hyc
-    hyc::start(file_name, input_file, output_file, optimisation_level, log_level, debug_mode);
+    hyc::start(absolute_path(file_name), input_file, output_file, opt_level, debug_mode);
 }
