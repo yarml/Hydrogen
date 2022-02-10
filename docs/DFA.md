@@ -6,7 +6,7 @@ A DFA has a set of states, and transitions with conditions to move from a state 
 States can be final or non final, if the input makes the DFA stop on a non final state, then the input is invalid to that language, otherwise, the final state is returned by the DFA machine
 
 # DFA graph ascii syntax
-Somewhere  in the Hydrogen lexer/parser source code, you mat come accross a block of code preceded by a comment showing the DFA graph describing what that block of code is supposed to match
+Somewhere  in the Hydrogen lexer/parser source code, you may come accross a block of code preceded by a comment showing the DFA graph describing what that block of code is supposed to match
 
 ## Basic DFA syntax
 
@@ -26,10 +26,12 @@ The following is the DFA that matches PARENR(')') and only PARENR lexer token
 ```
 
 ## Branching DFAs
+```
 STATE --|--CONDITION1--> (FSTATE1)
         |--CONDITION2--> (FSTATE2)
         |--CONDITION3--> (FSTATE3)
         |--...
+```
 ### Example
 The following DFA matches both PARENL('(') and PARENR(')') lexer tokens
 
