@@ -10,7 +10,9 @@ Somewhere  in the Hydrogen lexer/parser source code, you mat come accross a bloc
 
 ## Basic DFA syntax
 
+```
 STATE --TRANSITION_CONDITION--> (FINAL_STATE)
+```
 
 Non final states are just written with their name, or . if they don't have one, and usually it's the latter case that is most found
 TRANSITION_CONDITION is supposed to be a character for lexer or token for parsers
@@ -19,7 +21,9 @@ Final states are written like their name with parentheses, their name should be 
 ### Example
 The following is the DFA that matches PARENR(')') and only PARENR lexer token
 
+```
 . --')'--> (PARENR)
+```
 
 ## Branching DFAs
 STATE --|--CONDITION1--> (FSTATE1)
@@ -29,13 +33,44 @@ STATE --|--CONDITION1--> (FSTATE1)
 ### Example
 The following DFA matches both PARENL('(') and PARENR(')') lexer tokens
 
+```
 . --|--'('--> (PARENL)
     |--')'--> (PARENR)
+```
 
 ## More complex DFAs
 DFAs can be chained, every state can be a DFA of its own, for example the following DFA matches
 GREAT('<'), GREAT_EQ('<='), SHIFTL('<<'), and ASSIGN_SHIFTL('<<=') lexer tokens
 
 
+```
 . --'<'--> (GREAT) --|--'='--> (GREAT_EQ)
                      |--'<'--> (SHIFTL) --'='--> (ASSIGN_SHIFTL)
+```
+
+## State references
+
+Because it is hard to draw lines with ascii charcters, states which point to themselves, or to states before them can use the following syntax:
+```
+STATE1 --CONDITION1--> STATE2 --CONDITION2--> *STATE1
+```
+
+## More complex conditions
+Regular expressions can be used for more complex conditions
+
+For example if a condition matches 'a', 'b', or 'c', it can be written this way
+
+```
+. --[abc]--> .
+```
+
+The condition * matches every symbol
+
+...
+
+## Default path
+If a state doesn't handle a condition, it is assumed to point to a dead state, defined by:
+
+```
+DEAD_STATE --*--> *DEAD_STATE
+```
