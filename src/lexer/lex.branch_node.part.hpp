@@ -1,4 +1,8 @@
 // A single branch is when two tokens have the same first character, but one is of size 2 while the other is a single character
+// DFA representation, check docs/DFA.md for the DFA syntax
+//
+//  . --FIRST--> (TOKF) --SECOND--> (TOKS)
+//
 #define SINGLE_BRANCH_NODE(FIRST, SECOND, TOKF, TOKS)                                             \
             else if(m_c == FIRST)                                                                  \
             {                                                                                       \
@@ -12,10 +16,16 @@
                 else                                                                                        \
                     out.push_back(token(std::string(1, FIRST), token::type::TOKF, line, cpos));              \
             }
+
 // A complex branch node is when a 4 tokens start with the same character
 // But one of them is only 1 character long
 // Two are two character long
 // And one is three characters long with a second character similar to one of the two with two characters
+// DFA representation, check docs/DFA.md for the DFA syntax
+//
+//  . --FIRST--> (TOK4) --|--SECOND1--> (TOK2) --THIRD--> (TOK1)
+//                        |--SECOND2--> (TOK3)
+//
 #define CPLX_BRANCH_NODE(FIRST, SECOND1, SECOND2, THIRD, TOK1, TOK2, TOK3, TOK4)                                               \
             else if(m_c == FIRST)                                                                                              \
             {                                                                                                                  \
@@ -45,9 +55,15 @@
                         break;                                                                                                 \
                 }                                                                                                              \
             }
+
 // And equal single branch is where three tokens start with the same character
 // But two of them are two characters long
 // while the other one is one character long
+// DFA representation, check docs/DFA.md for the DFA syntax
+//
+//  . --FIRST--> (TOK3) --|--SECOND1--> (TOK1)
+//                        |--SECOND2--> (TOK2)
+//
 #define EQ_SINGLE_BRANCH(FIRST, SECOND1, SECOND2, TOK1, TOK2, TOK3)                                       \
             else if(m_c == FIRST)                                                                         \
             {                                                                                             \

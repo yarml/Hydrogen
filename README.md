@@ -13,7 +13,7 @@ From a terminal, it can be cloned with: `git clone https://github.com/YavaCoco/H
 ## File structure
 The file structure is very straight forward:
 
-[inlude]: Contains the headers for Hydrogen
+[include]: Contains the headers for Hydrogen
 
 [src]: Contains the source files for Hydrogen
 
@@ -55,5 +55,5 @@ All the other command line arguments can be accessed with: `./hyc -h` or `./hyc 
 [include]: https://github.com/YavaCoco/Hydrogen/tree/main/include
 [libs]: https://github.com/YavaCoco/Hydrogen/tree/main/libs
 [src]: https://github.com/YavaCoco/Hydrogen/tree/main/src
-[CMakeFiles.txt]: https://github.com/YavaCoco/Hydrogen/tree/main/CMakeFiles.txt
 [HeliumOS]: https://github.com/YavaCoco/HeliumOS
+[CMakeFiles.txt]: https://github.com/YavaCoco/Hydrogen/blob/main/CMakeLists.txt
