@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #ifdef HYC_DEBUG
-#define DPRINTF(template, ...) fprintf(stderr, template, ##__VA_ARGS__)
+#define DPRINTF(template, ...) fprintf(stderr, "[DEBUG] " template, ##__VA_ARGS__)
 #else
 #define DPRINTF(template, ...) if(0)
 #endif

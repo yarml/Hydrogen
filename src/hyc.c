@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <args.h>
 #include <hyc.h>
+#include <lex.h>
 
 /* exit_* */
 noreturn void exit_error(int exit_code, char* template, ...)
@@ -17,7 +18,7 @@ noreturn void exit_error(int exit_code, char* template, ...)
 
 noreturn void exit_invlst(char* fname, int fln)
 {
-    fprintf(stderr, "Reached invalid state in %s:%d!\n", fname, fln);
+    fprintf(stderr, "Reached invalid state in %s:%d\n", fname, fln);
     exit(EXIT_INVLST);
 }
 
@@ -25,19 +26,19 @@ noreturn void exit_invlst(char* fname, int fln)
 // TODO: print_help, print_ver
 void print_help()
 {
-    fprintf(stderr, "<TODO>\n");
+    fprintf(stderr, "<TODO: help>\n");
 }
 void print_ver()
 {
-    fprintf(stderr, "<TODO>\n");
+    fprintf(stderr, "<TODO: version>\n");
 }
 
 #include <fcntl.h>
 
 int main(int argc, char** argv)
-{
-    hyc_args* args = args_parse(argc, argv);    
-
+{    
+    hyc_args* args = args_parse(argc, argv);
+    lex(args);
     args_clean(args);   
 }
 

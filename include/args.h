@@ -8,9 +8,6 @@ struct HYC_ARGS
 {
     int    argc;
     char** argv;
-
-    FILE* is;
-    FILE* os;
 };
 
 typedef struct HYC_ARGS hyc_args;
