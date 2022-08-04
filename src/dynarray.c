@@ -41,7 +41,7 @@ size_t dynarray_size(dynarray* da)
     return 0;
 }
 
-void* dynarray_access(dynarray* da)
+void* dynarray_data(dynarray* da)
 {
     if(da)
         return da->array;

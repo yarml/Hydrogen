@@ -22,6 +22,14 @@ noreturn void exit_invlst(char* fname, int fln)
     exit(EXIT_INVLST);
 }
 
+noreturn void exit_lexerr(char* details, int line, int colm, char* lines, char* iss)
+{
+    int ref = 0;
+    fprintf(stderr, "Syntax error at `%s:%d:%d` `%n%s`: %s\n", iss, line, colm, &ref, lines, details);
+    fprintf(stderr, "%*c^\n", ref + colm, ' ');
+    exit(EXIT_LEXERR);
+}
+
 /* print_* */
 // TODO: print_help, print_ver
 void print_help()
@@ -36,9 +44,9 @@ void print_ver()
 #include <fcntl.h>
 
 int main(int argc, char** argv)
-{    
-    hyc_args* args = args_parse(argc, argv);
-    lex(args);
-    args_clean(args);   
+{
+    hyc_args* args = args_init(argc, argv);
+    
+    args_fini(args);   
 }
 

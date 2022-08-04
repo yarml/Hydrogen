@@ -19,7 +19,7 @@ dynarray* dynarray_init(size_t elsize, size_t insize);
 void dynarray_fini(dynarray* da);
 
 size_t dynarray_size(dynarray* da);
-void* dynarray_access(dynarray* da);
+void* dynarray_data(dynarray* da);
 
 bool dynarray_insert(dynarray* da, size_t idx, void* el);
 bool dynarray_append(dynarray* da, void* el);

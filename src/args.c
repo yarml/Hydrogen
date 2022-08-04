@@ -14,10 +14,11 @@ hyc_args* args_parse(int argc, char** argv)
     char* of  = NULL;
     char* inf = NULL;
 
+
     /* parse arguments */
     int c;
     opterr = 0;
-    while((c = getopt(argc, argv, "hvo:"), c != -1))
+    while((c = getopt(argc, argv, "hvio:"), c != -1))
     {
         switch(c)
         {
@@ -63,7 +64,7 @@ hyc_args* args_parse(int argc, char** argv)
             exit_error(EXIT_ARGS, "Couldnt't open output file `%s`\n", of);
         DPRINTF("Using output file `%s`\n", of);
     }
-
+    
     if(inf)
     {
         stdin = freopen(inf, "r", stdin);

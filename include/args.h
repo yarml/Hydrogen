@@ -12,7 +12,7 @@ struct HYC_ARGS
 
 typedef struct HYC_ARGS hyc_args;
 
-hyc_args* args_parse(int argc, char** argv);
-void args_clean(hyc_args* args);
+hyc_args* args_init(int argc, char** argv);
+void      args_fini(hyc_args* args);
 
 #endif

@@ -1,3 +1,4 @@
+# This draft is obsolete, check draft2.hy
 ## 
 This file is a draft for syntaxes I would like to implement in the languages
 Things here aren't necessarily accurate and can be either outdated,
