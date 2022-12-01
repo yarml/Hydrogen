@@ -104,7 +104,7 @@ status hyc_params_parse(int argc, char **argv, hyc_params *out_params)
     switch(argc - optind)
     {
         case 0:
-            ifname = HYC_DEF_SOURCE;
+            ifname = 0;
             break;
         case 1:
             ifname = argv[optind];

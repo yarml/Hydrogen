@@ -3,8 +3,6 @@
 
 #include <dtc/status.h>
 
-#define HYC_DEF_SOURCE ("source.hy")
-
 enum HYC_STAGE;
 typedef enum HYC_STAGE hyc_stage;
 enum HYC_STAGE
