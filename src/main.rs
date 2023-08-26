@@ -28,5 +28,8 @@ fn main() {
   let lexer = Lexer::new(&source);
   let tokens = lexer.collect::<Vec<_>>();
 
-  println!("Tokens: {:?}", tokens);
+  println!("All Tokens:");
+  for t in tokens.iter() {
+    println!("\t{:?}", t);
+  }
 }

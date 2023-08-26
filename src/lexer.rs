@@ -31,6 +31,10 @@ pub enum Token {
     line: usize,
     column: usize,
   },
+  Colon {
+    line: usize,
+    column: usize,
+  },
 
   Indent {
     line: usize,
@@ -44,11 +48,31 @@ pub enum Token {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LexerError {
-  InvalidState { line: usize, column: usize },
-  UnknownIndentationType { line: usize, column: usize },
-  MixSpacesAndTabsIndentations { line: usize, column: usize },
-  OddSpaceIndentation { line: usize, column: usize },
-  MultipleIndentations { line: usize, column: usize },
+  InvalidState {
+    line: usize,
+    column: usize,
+    ch: Option<char>,
+  },
+  UnknownIndentationType {
+    line: usize,
+    column: usize,
+  },
+  MixSpacesAndTabsIndentations {
+    line: usize,
+    column: usize,
+  },
+  OddSpaceIndentation {
+    line: usize,
+    column: usize,
+  },
+  MultipleIndentations {
+    line: usize,
+    column: usize,
+  },
+  UnexpectedLiteralStringEnding {
+    line: usize,
+    column: usize,
+  },
 }
 
 pub struct Lexer<'source> {
@@ -117,7 +141,6 @@ impl<'source> Lexer<'source> {
       }
     }
 
-    println!("-+* next_char() -> {:?}", c);
     c
   }
 
@@ -153,8 +176,6 @@ impl<'source> Lexer<'source> {
   // }
 
   fn putbackc(&mut self, c: char) {
-    println!("-+* putback({:?})", c);
-
     self.putback.add(c).unwrap();
 
     match c {
@@ -179,6 +200,7 @@ impl<'source> Iterator for Lexer<'source> {
       match self.next_skip_char(char_is_whitespace_not_newline, None) {
         None => return None,
         Some(c) => match c {
+          // Comments
           '#' => match self.next_char() {
             None => return None,
             Some(c) => match c {
@@ -196,6 +218,26 @@ impl<'source> Iterator for Lexer<'source> {
               },
             },
           },
+          // One character symbols
+          '(' => {
+            return Some(Ok(Token::ParenOpen {
+              line: self.line,
+              column: self.column,
+            }))
+          }
+          ')' => {
+            return Some(Ok(Token::ParenClose {
+              line: self.line,
+              column: self.column,
+            }))
+          }
+          ':' => {
+            return Some(Ok(Token::Colon {
+              line: self.line,
+              column: self.column,
+            }))
+          }
+          // Indents and dedents
           '\n' => {
             let mut spaces = String::new();
             match self
@@ -206,7 +248,6 @@ impl<'source> Iterator for Lexer<'source> {
                 self.putbackc('\n');
               }
               Some(c) => {
-                println!("Bitch new line followed by {:?}", c);
                 dbg!(&spaces);
                 self.putbackc(c);
                 enum IndentType {
@@ -260,10 +301,6 @@ impl<'source> Iterator for Lexer<'source> {
                 let old_indentation = self.indentation;
                 self.indentation = indentation;
 
-                println!(
-                  "Indentation in line {} is {}",
-                  self.line, self.indentation
-                );
 
                 match indentation - old_indentation {
                   pdiff if pdiff > 1 => {
@@ -298,10 +335,87 @@ impl<'source> Iterator for Lexer<'source> {
               }
             }
           }
-          _ => {
+          // Identifiers and keywords
+          c if c.is_alphabetic() => {
+            let mut identifier = format!("{}", c);
+            let next =
+              self.next_skip_char(char::is_alphanumeric, Some(&mut identifier));
+            if next.is_some() {
+              self.putbackc(next.unwrap());
+            }
+            return Some(Ok(Token::Identifier {
+              line: self.line,
+              column: self.column,
+              namespace: vec![],
+              name: identifier,
+            }));
+          }
+          '"' => {
+            let mut string_raw_content = String::new();
+            loop {
+              match self.next_skip_char(
+                char_is_not_double_quote,
+                Some(&mut string_raw_content),
+              ) {
+                None => {
+                  return Some(Err(LexerError::UnexpectedLiteralStringEnding {
+                    line: self.line,
+                    column: self.column,
+                  }))
+                }
+                Some(c) if c == '"' => {}
+                Some(c) => {
+                  return Some(Err(LexerError::InvalidState {
+                    line: self.line,
+                    column: self.column,
+                    ch: Some(c),
+                  }))
+                }
+              }
+              // Count the number of \ before the "
+              // If it's odd, then this " is escaped and doesn't count as the end
+              let mut backslash_count = 0;
+              for c in string_raw_content.chars().rev() {
+                if c == '\\' {
+                  backslash_count += 1;
+                } else {
+                  break;
+                }
+              }
+              if backslash_count % 2 == 0 {
+                // replace escaped characters
+                let mut strcontent = String::new();
+                string_raw_content.chars().fold(false, |escaped, c| {
+                  match escaped {
+                    true => {
+                      strcontent.push(c);
+                      false
+                    }
+                    false => match c {
+                      '\\' => true,
+                      c => {
+                        strcontent.push(c);
+                        false
+                      }
+                    },
+                  }
+                });
+                return Some(Ok(Token::LiteralString {
+                  line: self.line,
+                  column: self.column,
+                  value: strcontent,
+                }));
+              } else {
+                string_raw_content.push('"');
+              }
+            }
+          }
+          // Unknown character
+          c => {
             return Some(Err(LexerError::InvalidState {
               line: self.line,
               column: self.column,
+              ch: Some(c),
             }))
           }
         },
@@ -312,4 +426,8 @@ impl<'source> Iterator for Lexer<'source> {
 
 fn char_is_whitespace_not_newline(c: char) -> bool {
   c.is_whitespace() && c != '\n'
+}
+
+fn char_is_not_double_quote(c: char) -> bool {
+  c != '"'
 }
