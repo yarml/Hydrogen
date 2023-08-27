@@ -26,8 +26,9 @@ fn main() {
   input_file.read_to_string(&mut source).unwrap();
 
   let lexer = Lexer::new(&source);
+
   let tokens = lexer.collect::<Vec<_>>();
   let checked_tokens = Lexer::check(tokens).unwrap();
 
-  dbg!(checked_tokens);
+  dbg!(&checked_tokens);
 }
