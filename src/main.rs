@@ -27,9 +27,7 @@ fn main() {
 
   let lexer = Lexer::new(&source);
   let tokens = lexer.collect::<Vec<_>>();
+  let checked_tokens = Lexer::check(tokens).unwrap();
 
-  println!("All Tokens:");
-  for t in tokens.iter() {
-    println!("\t{:?}", t);
-  }
+  dbg!(checked_tokens);
 }

@@ -75,6 +75,57 @@ pub enum LexerError {
   },
 }
 
+impl LexerError {
+  pub fn error_str(&self) -> String {
+    match *self {
+      LexerError::InvalidState {
+        line,
+        column,
+        ch: Some(c),
+      } if column > 0 => format!(
+        "Invalid State at {}:{}, near the character {:?}",
+        line, column, c
+      ),
+      LexerError::InvalidState {
+        line,
+        column,
+        ch: None,
+      } if column > 0 => format!("Invalid State at {}:{}", line, column),
+      LexerError::InvalidState {
+        line,
+        column,
+        ch: Some(c),
+      } if column <= 0 => {
+        format!("Invalid State at line {}, near the character {:?}", line, c)
+      }
+      LexerError::InvalidState {
+        line,
+        column,
+        ch: None,
+      } if column <= 0 => {
+        format!("Invalid State at line {}", line)
+      }
+      LexerError::InvalidState { .. } => format!("Invalid state"),
+      LexerError::UnknownIndentationType { line, .. } => {
+        format!("Unknown indentation type at line {}", line)
+      }
+      LexerError::MixSpacesAndTabsIndentations { line, .. } => {
+        format!("Indentation mixes spaces and tabs at line {}", line)
+      }
+      LexerError::OddSpaceIndentation { line, .. } => format!(
+        "Indentation contains a missing/additional space at line {}.",
+        line
+      ),
+      LexerError::MultipleIndentations { line, .. } => {
+        format!("Line {} has a lot of indentations", line)
+      }
+      LexerError::UnexpectedLiteralStringEnding { line, column } => {
+        format!("File ended before string closed at {}:{}", line, column)
+      }
+    }
+  }
+}
+
 pub struct Lexer<'source> {
   head: Chars<'source>,
   putback: Queue<char>,
@@ -149,29 +200,26 @@ impl<'source> Lexer<'source> {
   fn next_until(&mut self, sequence: &str) -> Option<char> {
     match sequence.chars().nth(0) {
       None => self.next_char(),
-      Some(first_c) => {
-        println!("first_c={:?}", first_c);
-        'next_match: loop {
-          match self.next_skip_char(move |c| c != first_c, None) {
-            None => return None,
-            Some(_) => {
-              for c in sequence[1..].chars() {
-                match self.next_char() {
-                  Some(ac) if ac == c => {}
-                  Some(ac) => {
-                    if ac == first_c {
-                      self.putbackc(ac);
-                    }
-                    continue 'next_match;
+      Some(first_c) => 'next_match: loop {
+        match self.next_skip_char(move |c| c != first_c, None) {
+          None => return None,
+          Some(_) => {
+            for c in sequence[1..].chars() {
+              match self.next_char() {
+                Some(ac) if ac == c => {}
+                Some(ac) => {
+                  if ac == first_c {
+                    self.putbackc(ac);
                   }
-                  None => return None,
+                  continue 'next_match;
                 }
+                None => return None,
               }
-              return self.next_char();
             }
+            return self.next_char();
           }
         }
-      }
+      },
     }
   }
 
@@ -195,33 +243,25 @@ impl<'source> Lexer<'source> {
 
   fn next_real_token(&mut self) -> Option<TokenResult> {
     loop {
-      println!("loopback");
       match self.next_skip_char(char_is_whitespace_not_newline, None) {
         // End of file
         None => return None,
         // Comments
-        Some('#') => {
-          println!("found #");
-          match self.next_char() {
+        Some('#') => match self.next_char() {
+          None => return None,
+          Some('\n') => self.putbackc('\n'),
+          Some('#') => match self.next_until("##") {
             None => return None,
-            Some('\n') => self.putbackc('\n'),
-            Some('#') => match self.next_until("##") {
-              None => return None,
-              Some(c) => self.putbackc(c),
-            },
-            Some(w) => {
-              let a = self.next_until("\n");
-              println!("dede {:?} {:?}", w, a);
-              match a {
-                None => return None,
-                Some(c) => {
-                  self.putbackc('\n');
-                  self.putbackc(c);
-                }
-              }
+            Some(c) => self.putbackc(c),
+          },
+          Some(_) => match self.next_until("\n") {
+            None => return None,
+            Some(c) => {
+              self.putbackc('\n');
+              self.putbackc(c);
             }
-          }
-        }
+          },
+        },
         // One character symbols
         Some('(') => {
           return Some(Ok(Token::ParenOpen {
@@ -248,11 +288,10 @@ impl<'source> Lexer<'source> {
             .next_skip_char(char_is_whitespace_not_newline, Some(&mut spaces))
           {
             None => return None,
-            Some(c) if c == '\n' => {
+            Some('\n') => {
               self.putbackc('\n');
             }
             Some(c) => {
-              dbg!(&spaces);
               self.putbackc(c);
               enum IndentType {
                 Space,
@@ -267,8 +306,8 @@ impl<'source> Lexer<'source> {
                 }
               }
               let deduced_indent_type = match spaces.chars().nth(0) {
-                Some(c) if c == ' ' => IndentType::Space,
-                Some(c) if c == '\t' => IndentType::Tab,
+                Some(' ') => IndentType::Space,
+                Some('\t') => IndentType::Tab,
                 None => IndentType::Space,
                 _ => {
                   return Some(Err(LexerError::UnknownIndentationType {
@@ -303,7 +342,7 @@ impl<'source> Lexer<'source> {
               let old_indentation = self.indentation;
               self.indentation = indentation;
 
-              match indentation - old_indentation {
+              match indentation as isize - old_indentation as isize {
                 pdiff if pdiff > 1 => {
                   return Some(Err(LexerError::MultipleIndentations {
                     line: self.line,
@@ -344,12 +383,19 @@ impl<'source> Lexer<'source> {
           if next.is_some() {
             self.putbackc(next.unwrap());
           }
-          return Some(Ok(Token::Identifier {
-            line: self.line,
-            column: self.column,
-            namespace: vec![],
-            name: identifier,
-          }));
+          let token = match identifier.as_str() {
+            "func" => Token::KeywordFunc {
+              line: self.line,
+              column: self.column,
+            },
+            _ => Token::Identifier {
+              line: self.line,
+              column: self.column,
+              namespace: vec![],
+              name: identifier,
+            },
+          };
+          return Some(Ok(token));
         }
         // String literal
         Some('"') => {
@@ -365,7 +411,7 @@ impl<'source> Lexer<'source> {
                   column: self.column,
                 }))
               }
-              Some(c) if c == '"' => {}
+              Some('"') => {}
               Some(c) => {
                 return Some(Err(LexerError::InvalidState {
                   line: self.line,
@@ -423,6 +469,23 @@ impl<'source> Lexer<'source> {
         }
       }
     }
+  }
+
+  pub fn check(
+    lexed_source: Vec<Result<Token, LexerError>>,
+  ) -> Option<Vec<Token>> {
+    let mut checked_source = Vec::new();
+    for result in lexed_source {
+      if result.is_err() {
+        let error = result.unwrap_err().error_str();
+        println!("Syntax error:");
+        println!("{}", error);
+        return None;
+      } else {
+        checked_source.push(result.unwrap());
+      }
+    }
+    Some(checked_source)
   }
 }
 
