@@ -1,29 +1,29 @@
-use queues::IsQueue;
-
 use crate::lexer::error::LexerError;
 
 use super::{
   token::Token,
   utils::{char_is_not_double_quote, char_is_whitespace_not_newline},
-  Lexer, TokenResult,
+  Lexer,
 };
 
 impl<'source> Lexer<'source> {
-  pub(super) fn next_real_token(&mut self) -> Option<TokenResult> {
+  pub(super) fn next_real_token(
+    &mut self,
+  ) -> Result<Option<Token>, LexerError> {
     loop {
       match self.next_skip_char(char_is_whitespace_not_newline, None) {
         // End of file
-        None => return None,
+        None => return Ok(None),
         // Comments
         Some('#') => match self.next_char() {
-          None => return None,
+          None => return Ok(None),
           Some('\n') => self.putbackc('\n'),
           Some('#') => match self.next_until("##") {
-            None => return None,
+            None => return Ok(None),
             Some(c) => self.putbackc(c),
           },
           Some(_) => match self.next_until("\n") {
-            None => return None,
+            None => return Ok(None),
             Some(c) => {
               self.putbackc('\n');
               self.putbackc(c);
@@ -32,30 +32,28 @@ impl<'source> Lexer<'source> {
         },
         // One character symbols
         Some('(') => {
-          return Some(Ok(Token::ParenOpen {
-            line: self.line,
-            column: self.column,
+          return Ok(Some(Token::ParenOpen {
+            location: self.current_location(),
           }))
         }
         Some(')') => {
-          return Some(Ok(Token::ParenClose {
-            line: self.line,
-            column: self.column,
+          return Ok(Some(Token::ParenClose {
+            location: self.current_location(),
           }))
         }
         Some(':') => {
-          return Some(Ok(Token::Colon {
-            line: self.line,
-            column: self.column,
+          return Ok(Some(Token::Colon {
+            location: self.current_location(),
           }))
         }
         // Indents and dedents
         Some('\n') => {
+          let lbeg_location = self.current_location();
           let mut spaces = String::new();
           match self
             .next_skip_char(char_is_whitespace_not_newline, Some(&mut spaces))
           {
-            None => return None,
+            None => return Ok(None),
             Some('\n') => {
               self.putbackc('\n');
             }
@@ -78,19 +76,17 @@ impl<'source> Lexer<'source> {
                 Some('\t') => IndentType::Tab,
                 None => IndentType::Space,
                 _ => {
-                  return Some(Err(LexerError::UnknownIndentationType {
-                    line: self.line,
-                    column: 0,
-                  }))
+                  return Err(LexerError::UnknownIndentationType {
+                    location: lbeg_location,
+                  })
                 }
               };
               let mut indentation = 0;
               for space in spaces.chars() {
                 if !deduced_indent_type.match_char(space) {
-                  return Some(Err(LexerError::MixSpacesAndTabsIndentations {
-                    line: self.line,
-                    column: 0,
-                  }));
+                  return Err(LexerError::MixSpacesAndTabsIndentations {
+                    location: lbeg_location,
+                  });
                 }
 
                 indentation += 1;
@@ -98,10 +94,9 @@ impl<'source> Lexer<'source> {
 
               match deduced_indent_type {
                 IndentType::Space if indentation % 2 != 0 => {
-                  return Some(Err(LexerError::OddSpaceIndentation {
-                    line: self.line,
-                    column: 0,
-                  }))
+                  return Err(LexerError::OddSpaceIndentation {
+                    location: lbeg_location,
+                  })
                 }
                 IndentType::Space => indentation /= 2,
                 _ => {}
@@ -112,31 +107,24 @@ impl<'source> Lexer<'source> {
 
               match indentation as isize - old_indentation as isize {
                 pdiff if pdiff > 1 => {
-                  return Some(Err(LexerError::MultipleIndentations {
-                    line: self.line,
-                    column: 0,
-                  }))
+                  return Err(LexerError::MultipleIndentations {
+                    location: lbeg_location,
+                  })
                 }
                 1 => {
-                  return Some(Ok(Token::Indent {
-                    line: self.line,
-                    column: 0,
+                  return Ok(Some(Token::Indent {
+                    location: lbeg_location,
                   }))
                 }
                 0 => {}
                 ndiff => {
                   for _ in 0..-((ndiff - 1) as isize) {
-                    self
-                      .next_buf
-                      .add(Token::Dedent {
-                        line: self.line,
-                        column: 0,
-                      })
-                      .unwrap();
+                    self.next_buf.push_back(Token::Dedent {
+                      location: lbeg_location.clone(),
+                    });
                   }
-                  return Some(Ok(Token::Dedent {
-                    line: self.line,
-                    column: 0,
+                  return Ok(Some(Token::Dedent {
+                    location: lbeg_location,
                   }));
                 }
               }
@@ -145,7 +133,8 @@ impl<'source> Lexer<'source> {
         }
         // Identifiers & keywords
         Some(c) if c.is_alphabetic() => {
-          let mut identifier = format!("{}", c);
+          let word_location = self.current_location();
+          let mut identifier = format!("{c}");
           let next =
             self.next_skip_char(char::is_alphanumeric, Some(&mut identifier));
           if next.is_some() {
@@ -153,20 +142,19 @@ impl<'source> Lexer<'source> {
           }
           let token = match identifier.as_str() {
             "func" => Token::KeywordFunc {
-              line: self.line,
-              column: self.column,
+              location: word_location,
             },
             _ => Token::Identifier {
-              line: self.line,
-              column: self.column,
+              location: word_location,
               namespace: vec![],
               name: identifier,
             },
           };
-          return Some(Ok(token));
+          return Ok(Some(token));
         }
         // String literal
         Some('"') => {
+          let str_location = self.current_location();
           let mut string_raw_content = String::new();
           loop {
             match self.next_skip_char(
@@ -174,18 +162,16 @@ impl<'source> Lexer<'source> {
               Some(&mut string_raw_content),
             ) {
               None => {
-                return Some(Err(LexerError::UnexpectedLiteralStringEnding {
-                  line: self.line,
-                  column: self.column,
-                }))
+                return Err(LexerError::UnexpectedLiteralStringEnding {
+                  beg_location: str_location,
+                  end_location: self.current_location(),
+                })
               }
               Some('"') => {}
-              Some(c) => {
-                return Some(Err(LexerError::InvalidState {
-                  line: self.line,
-                  column: self.column,
-                  ch: Some(c),
-                }))
+              Some(_) => {
+                return Err(LexerError::InvalidState {
+                  location: self.current_location(),
+                })
               }
             }
             // Count the number of \ before the "
@@ -217,9 +203,8 @@ impl<'source> Lexer<'source> {
                   },
                 },
               );
-              return Some(Ok(Token::LiteralString {
-                line: self.line,
-                column: self.column,
+              return Ok(Some(Token::LiteralString {
+                location: str_location,
                 value: strcontent,
               }));
             } else {
@@ -229,11 +214,10 @@ impl<'source> Lexer<'source> {
         }
         // Unknown character
         Some(c) => {
-          return Some(Err(LexerError::InvalidState {
-            line: self.line,
-            column: self.column,
-            ch: Some(c),
-          }))
+          self.putbackc(c);
+          return Err(LexerError::UnexpectedSymbol {
+            location: self.current_location(),
+          });
         }
       }
     }

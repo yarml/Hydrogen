@@ -10,8 +10,8 @@ fn main() {
   let input_path = match &cli_args[..] {
     [_cmd] => Some("input.hy"),
     [_cmd, input_file] => Some(input_file.as_str()),
-    [_cmd, ..] => {
-      eprintln!("Usage: {} <input_file>", _cmd);
+    [cmd, ..] => {
+      eprintln!("Usage: {cmd} <input_file>");
       exit(1);
     }
     _ => {
@@ -25,10 +25,7 @@ fn main() {
   let mut source = String::new();
   input_file.read_to_string(&mut source).unwrap();
 
-  let lexer = Lexer::new(&source);
+  let lexer = Lexer::new(input_path.to_string(), &source);
 
-  let tokens = lexer.collect::<Vec<_>>();
-  let checked_tokens = Lexer::check(tokens).unwrap();
-
-  dbg!(&checked_tokens);
+  let _tokens = lexer.collect::<Vec<_>>();
 }

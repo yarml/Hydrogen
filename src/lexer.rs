@@ -1,18 +1,19 @@
 pub mod error;
+pub mod location;
 pub mod token;
 
 mod next_token;
 mod utils;
 
-use queues::{IsQueue, Queue};
-use std::str::Chars;
+use std::{collections::VecDeque, process::exit, str::Chars};
 
-use self::{error::LexerError, token::Token};
+use self::{location::TokenLocation, token::Token};
 
 pub struct Lexer<'source> {
   head: Chars<'source>,
-  putback: Queue<char>,
-  next_buf: Queue<Token>,
+  putback: Vec<char>,
+  next_buf: VecDeque<Token>,
+  file_name: String,
 
   line: usize,
   column: usize,
@@ -21,14 +22,13 @@ pub struct Lexer<'source> {
   indentation: usize,
 }
 
-type TokenResult = Result<Token, LexerError>;
-
 impl<'source> Lexer<'source> {
-  pub fn new(source: &'source String) -> Self {
+  pub fn new(file_name: String, source: &'source String) -> Self {
     Self {
       head: source.chars(),
-      putback: Queue::new(),
-      next_buf: Queue::new(),
+      putback: Vec::new(),
+      next_buf: VecDeque::new(),
+      file_name,
       line: 1,
       column: 1,
       line_lengths: Vec::new(),
@@ -58,8 +58,8 @@ impl<'source> Lexer<'source> {
   }
 
   fn next_char(&mut self) -> Option<char> {
-    let c = if self.putback.size() > 0 {
-      Some(self.putback.remove().unwrap())
+    let c = if self.putback.len() > 0 {
+      Some(self.putback.pop().unwrap())
     } else {
       self.head.next()
     };
@@ -107,13 +107,13 @@ impl<'source> Lexer<'source> {
   }
 
   // fn putback(&mut self, seq: &str) {
-  //   for c in seq.chars() {
+  //   for c in seq.chars().rev() {
   //     self.putbackc(c);
   //   }
   // }
 
   fn putbackc(&mut self, c: char) {
-    self.putback.add(c).unwrap();
+    self.putback.push(c);
 
     match c {
       '\n' => {
@@ -124,42 +124,38 @@ impl<'source> Lexer<'source> {
     }
   }
 
-  pub fn check(
-    lexed_source: Vec<Result<Token, LexerError>>,
-  ) -> Option<Vec<Token>> {
-    let mut checked_source = Vec::new();
-    for result in lexed_source {
-      if result.is_err() {
-        let error = result.unwrap_err().error_str();
-        println!("Syntax error:");
-        println!("{}", error);
-        return None;
-      } else {
-        checked_source.push(result.unwrap());
-      }
-    }
-    Some(checked_source)
+  fn current_location(&mut self) -> TokenLocation {
+    let c = self.next_char();
+    if c.is_some() {
+      self.putbackc(c.unwrap())
+    };
+    TokenLocation::new(&self.file_name, self.line, self.column, c)
   }
 }
 
 impl<'source> Iterator for Lexer<'source> {
-  type Item = TokenResult;
+  type Item = Token;
 
   fn next(&mut self) -> Option<Self::Item> {
-    if self.next_buf.size() > 0 {
-      return Some(Ok(self.next_buf.remove().unwrap()));
+    if self.next_buf.len() > 0 {
+      return self.next_buf.pop_front();
     }
 
-    let real_token = self.next_real_token();
     // Return missing dedents if end of file
-    if real_token.is_none() && self.indentation > 0 {
-      self.indentation -= 1;
-      return Some(Ok(Token::Dedent {
-        line: self.line,
-        column: self.column,
-      }));
-    } else {
-      return real_token;
+    match self.next_real_token() {
+      Err(err) => {
+        let error_str = err.error_str();
+        println!("Syntax error:");
+        println!("{error_str}");
+        exit(0);
+      }
+      Ok(None) if self.indentation > 0 => {
+        self.indentation -= 1;
+        return Some(Token::Dedent {
+          location: self.current_location(),
+        });
+      }
+      Ok(real_token) => return real_token,
     }
   }
 }

@@ -1,43 +1,37 @@
+use super::location::TokenLocation;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
   Identifier {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
 
     namespace: Vec<String>,
     name: String,
   },
 
   LiteralString {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
     value: String,
   },
 
   KeywordFunc {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
   },
 
   ParenOpen {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
   },
   ParenClose {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
   },
   Colon {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
   },
 
   Indent {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
   },
   Dedent {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
   },
 }

@@ -1,78 +1,61 @@
+use super::location::TokenLocation;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum LexerError {
   InvalidState {
-    line: usize,
-    column: usize,
-    ch: Option<char>,
+    location: TokenLocation,
+  },
+  UnexpectedSymbol {
+    location: TokenLocation,
   },
   UnknownIndentationType {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
   },
   MixSpacesAndTabsIndentations {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
   },
   OddSpaceIndentation {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
   },
   MultipleIndentations {
-    line: usize,
-    column: usize,
+    location: TokenLocation,
   },
   UnexpectedLiteralStringEnding {
-    line: usize,
-    column: usize,
+    beg_location: TokenLocation,
+    end_location: TokenLocation,
   },
 }
 
 impl LexerError {
   pub fn error_str(&self) -> String {
-    match *self {
-      LexerError::InvalidState {
-        line,
-        column,
-        ch: Some(c),
-      } if column > 0 => format!(
-        "Invalid State at {}:{}, near the character {:?}",
-        line, column, c
+    match self {
+      LexerError::InvalidState { location } => {
+        format!("Invalid State at {location}")
+      }
+      LexerError::UnexpectedSymbol { location } => {
+        format!("Unexpected symbol at {location}")
+      }
+      LexerError::UnknownIndentationType { location } => {
+        format!("Unknown indentation type at {location}")
+      }
+      LexerError::MixSpacesAndTabsIndentations { location } => {
+        format!("Indentation mixes spaces and tabs at {location}")
+      }
+      LexerError::OddSpaceIndentation { location } => format!(
+        "Indentation contains a missing/additional space at {location}."
       ),
-      LexerError::InvalidState {
-        line,
-        column,
-        ch: None,
-      } if column > 0 => format!("Invalid State at {}:{}", line, column),
-      LexerError::InvalidState {
-        line,
-        column,
-        ch: Some(c),
-      } if column <= 0 => {
-        format!("Invalid State at line {}, near the character {:?}", line, c)
+      LexerError::MultipleIndentations { location } => {
+        format!("Lot of indentations at {location}")
       }
-      LexerError::InvalidState {
-        line,
-        column,
-        ch: None,
-      } if column <= 0 => {
-        format!("Invalid State at line {}", line)
+      LexerError::UnexpectedLiteralStringEnding {
+        beg_location,
+        end_location,
+      } => {
+        format!("File ended before string closed at {end_location}. Not string opened at {beg_location}")
       }
-      LexerError::InvalidState { .. } => format!("Invalid state"),
-      LexerError::UnknownIndentationType { line, .. } => {
-        format!("Unknown indentation type at line {}", line)
-      }
-      LexerError::MixSpacesAndTabsIndentations { line, .. } => {
-        format!("Indentation mixes spaces and tabs at line {}", line)
-      }
-      LexerError::OddSpaceIndentation { line, .. } => format!(
-        "Indentation contains a missing/additional space at line {}.",
-        line
-      ),
-      LexerError::MultipleIndentations { line, .. } => {
-        format!("Line {} has a lot of indentations", line)
-      }
-      LexerError::UnexpectedLiteralStringEnding { line, column } => {
-        format!("File ended before string closed at {}:{}", line, column)
+      #[allow(unreachable_patterns)]
+      e => {
+        format!("{:?}", e)
       }
     }
   }
