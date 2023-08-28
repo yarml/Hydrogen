@@ -1,8 +1,9 @@
-use std::{env, fs::File, io::Read, path::Path, process::exit};
+mod lexer;
+mod parser;
 
 use lexer::Lexer;
-
-mod lexer;
+use parser::parse;
+use std::{env, fs::File, io::Read, path::Path, process::exit};
 
 fn main() {
   let cli_args: Vec<String> = env::args().collect();
@@ -27,5 +28,15 @@ fn main() {
 
   let lexer = Lexer::new(input_path.to_string(), &source);
 
-  let _tokens = lexer.collect::<Vec<_>>();
+  let tokens = lexer.collect::<Vec<_>>();
+  match parse(&tokens) {
+    Ok(ast) => {
+      dbg!(ast);
+      ()
+    }
+    Err(e) => {
+      dbg!(e);
+      ()
+    }
+  }
 }

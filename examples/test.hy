@@ -1,9 +1,3 @@
-# hello
 
-func main():
-## Wow
-these multine comments
-actually work
-##
-  print("Hello, World\"dede")
-main()
+def func main():
+  print("Hello, World\"dede", "dede")

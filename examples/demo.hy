@@ -7,7 +7,7 @@
 ##
 Multiple line comments
 -------
-So ho're you doing
+So how're you doing
 ##
 
 ##
@@ -56,7 +56,7 @@ Namespaces can be defined like
 ##
 
 ns test::ns1:
-    # Namespace content
+  # Namespace content
 
 ##
 A symbol can be put in a namespace also with the 'in' keyword
@@ -134,7 +134,7 @@ then it can be declared here like
 ##
 
 ns test::ns1:
-    decl var test_number : int
+  decl var test_number : int
 
 ## OR ##
 
@@ -150,7 +150,7 @@ Assuming 'test_const' is like test_number except it is a constant
 ##
 
 ns test::ns1:
-    decl const test_const : int
+  decl const test_const : int
 
 ## OR ##
 
@@ -224,41 +224,41 @@ Typical function variable defintion is like
 ##
 
 def func f():
-    def a : int = 1
-    def b : char* = "Hello, World!"
-    def c : int const = 2
+  def a : int = 1
+  def b : char* = "Hello, World!"
+  def c : int const = 2
 
 # Structs
 
 struct custom_type:
-    a : int
-    b : byte
-    c : char const*
+  a : int
+  b : byte
+  c : char const*
 
 def func f2(s : custom_type*) -> opt b : byte, c : char const*:
-    b = s->b
-    c = s->c
+  b = s->b
+  c = s->c
 
 
 def func f3():
-    def b : byte
-    def c : char const*
+  def b : byte
+  def c : char const*
 
-    def s : custom_type
+  def s : custom_type
 
-    s.a = 1
-    s.b = 4
-    s.c = "Hello"
+  s.a = 1
+  s.b = 4
+  s.c = "Hello"
 
-    f2(&s) -> _, c
-    f2(&s) -> b, c
+  f2(&s) -> _, c
+  f2(&s) -> b, c
 
 # Loops
 # There is only one type of loops in Hydrogen
 
 def func f4():
-    def a : int = 0
-    loop:
-        if a >= 10:
-            break
-        ++a
+  def a : int = 0
+  loop:
+    if a >= 10:
+      break
+    ++a

@@ -17,6 +17,9 @@ pub enum Token {
   KeywordFunc {
     location: TokenLocation,
   },
+  KeywordDef {
+    location: TokenLocation,
+  },
 
   ParenOpen {
     location: TokenLocation,
@@ -25,6 +28,9 @@ pub enum Token {
     location: TokenLocation,
   },
   Colon {
+    location: TokenLocation,
+  },
+  Comma {
     location: TokenLocation,
   },
 

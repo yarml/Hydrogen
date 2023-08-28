@@ -46,6 +46,11 @@ impl<'source> Lexer<'source> {
             location: self.current_location(),
           }))
         }
+        Some(',') => {
+          return Ok(Some(Token::Comma {
+            location: self.current_location(),
+          }))
+        }
         // Indents and dedents
         Some('\n') => {
           let lbeg_location = self.current_location();
@@ -142,6 +147,9 @@ impl<'source> Lexer<'source> {
           }
           let token = match identifier.as_str() {
             "func" => Token::KeywordFunc {
+              location: word_location,
+            },
+            "def" => Token::KeywordDef {
               location: word_location,
             },
             _ => Token::Identifier {
