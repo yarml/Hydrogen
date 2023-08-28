@@ -123,7 +123,7 @@ impl<'source> Lexer<'source> {
                 }
                 0 => {}
                 ndiff => {
-                  for _ in 0..-((ndiff - 1) as isize) {
+                  for _ in 0..-(ndiff as isize) - 1 {
                     self.next_buf.push_back(Token::Dedent {
                       location: lbeg_location.clone(),
                     });
