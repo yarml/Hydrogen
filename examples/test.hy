@@ -1,3 +1,6 @@
 
+def func getstring():
+  "Hello"
+
 def func main():
-  print("Hello, World\"dede", "dede")
+  print(getstring(), ", World")

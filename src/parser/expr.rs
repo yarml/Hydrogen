@@ -1,9 +1,10 @@
-use crate::lexer::token::Token;
+use crate::{interpreter::Interpreter, lexer::token::Token};
 
 use super::{nodes::QualifiedName, ParserError};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
+  AtomNone,
   AtomString {
     value: String,
   },
@@ -37,6 +38,19 @@ pub enum Expression {
   },
 }
 
+impl Expression {
+  pub fn evaluate_as_str(&self, interpreter: &Interpreter) -> String {
+    match self {
+      Self::AtomString { value } => value.clone(),
+      Self::FunctionCall { name, args } => interpreter
+        .call_function(name, args)
+        .evaluate_as_str(interpreter),
+      Self::AtomNone => "None".into(),
+      _ => todo!(),
+    }
+  }
+}
+
 pub fn parse_expression(
   mut remaining_tokens: &[Token],
 ) -> Result<(Expression, &[Token]), ParserError> {
@@ -58,7 +72,9 @@ pub fn parse_expression(
       let mut expressions = Vec::new();
       loop {
         match remaining_tokens {
-          [Token::ParenClose { .. }] => break,
+          [Token::ParenClose { .. }, ..] => {
+            break;
+          }
           _ => {}
         }
         match parse_expression(remaining_tokens)? {
@@ -75,7 +91,6 @@ pub fn parse_expression(
           _ => break,
         }
       }
-
       return match remaining_tokens {
         [Token::ParenClose { .. }, rest @ ..] => Ok((
           Expression::FunctionCall {
@@ -92,6 +107,8 @@ pub fn parse_expression(
         }),
       };
     }
-    _ => todo!(),
+    _ => {
+      todo!()
+    }
   }
 }

@@ -1,7 +1,7 @@
-mod decl;
-mod expr;
-mod nodes;
-mod parts;
+pub mod decl;
+pub mod expr;
+pub mod nodes;
+pub mod parts;
 
 pub mod error;
 
@@ -34,6 +34,7 @@ pub fn parse(
       },
       _ => {
         eprintln!("Could not parse ur giberrish");
+        dbg!(source_tokens);
         dbg!(remaining_tokens);
         dbg!(decls);
         exit(0);

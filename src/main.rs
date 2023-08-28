@@ -1,8 +1,10 @@
+mod interpreter;
 mod lexer;
 mod parser;
 
+use interpreter::Interpreter;
 use lexer::Lexer;
-use parser::parse;
+use parser::{nodes::QualifiedName, parse};
 use std::{env, fs::File, io::Read, path::Path, process::exit};
 
 fn main() {
@@ -31,7 +33,14 @@ fn main() {
   let tokens = lexer.collect::<Vec<_>>();
   match parse(&tokens) {
     Ok(ast) => {
-      dbg!(ast);
+      let inter = Interpreter::new(ast);
+      inter.call_function(
+        &QualifiedName {
+          name: "main".into(),
+          namespaces: vec![],
+        },
+        &Vec::new(),
+      );
       ()
     }
     Err(e) => {
